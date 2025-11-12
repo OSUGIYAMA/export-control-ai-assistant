@@ -32,6 +32,10 @@ from visualization import (
     display_reference_data,
     create_entity_list_viewer
 )
+from rag_tools import (
+    LicenseExceptionRAG,
+    check_license_exception_with_rag
+)
 
 # Load environment variables
 load_dotenv()
@@ -642,7 +646,7 @@ def main():
         
         additional_info = st.text_area("追加情報・質問（オプション）", key="chat_additional", height=100)
         
-        if st.button("🔍 分析開始", key="chat_submit", type="primary"):
+            if st.button("🔍 分析開始（RAG許可例外判定含む）", key="chat_submit", type="primary"):
             if product_input:
                 with st.spinner("ECCN番号を判定し、カントリーチャートを分析中..."):
                     # データ準備
@@ -708,7 +712,28 @@ def main():
 - 中国: NS 1: ×, NS 2: ×, MT 1: × → 許可必要
 - オーストラリア: ほぼすべて空欄 → 許可不要（友好国）
 
-## ステップ3: 一般禁止事項（General Prohibitions）の確認 ★重要★
+## ステップ3: 許可例外（License Exceptions）の判定 ★RAG使用★
+
+リスト規制に該当する場合でも、許可例外が適用できれば許可申請が不要になります。
+以下の主要な許可例外について、RAGシステムから取得した情報に基づいて判定してください：
+
+**主要な許可例外**:
+- **LVS** (Limited Value Shipment): 少額特例
+- **GBS** (Shipment to Country Group B): B国群向け貨物
+- **TSR** (Technology and Software under Restriction): B国群向け技術・ソフトウェア
+- **TMP** (Temporary): 一時的な輸出・展示用
+- **ENC** (Encryption): 暗号製品
+- その他の許可例外
+
+**判定に必要な情報**:
+- ECCN番号と規制理由
+- 仕向地（国グループ）
+- 品目の性質・価値
+- 用途（一時的か恒久的か等）
+
+※この情報はPinecone RAGシステムから自動的に取得されます
+
+## ステップ4: 一般禁止事項（General Prohibitions）の確認 ★重要★
 
 以下の10項目を必ずチェックしてください：
 
@@ -735,7 +760,7 @@ def main():
 - ロシア、ベラルーシ、北朝鮮、中国等を経由しないか
 - 該当する場合: ⚠️ 通過許可が必要
 
-## ステップ4: 総合判定
+## ステップ5: 総合判定
 
 以下の形式で明確に判定してください：
 
@@ -782,6 +807,40 @@ def main():
                         # 結果を表示
                         st.markdown("### 📋 分析結果")
                         st.markdown(answer)
+                        
+                        # RAGで許可例外を判定（ステップD）
+                        st.markdown("---")
+                        st.markdown("### 🎯 ステップD: 許可例外（License Exceptions）判定【RAG分析】")
+                        
+                        with st.spinner("Pinecone RAGで許可例外を分析中..."):
+                            try:
+                                # RAG分析実行
+                                success, rag_result = check_license_exception_with_rag(
+                                    eccn_number="推定ECCN（AIが判定したもの）",  # 実際にはAIの回答から抽出
+                                    destination=destination_input,
+                                    product_description=product_input,
+                                    end_user=None,
+                                    end_use=additional_info if additional_info else None
+                                )
+                                
+                                if success:
+                                    # RAG分析結果を表示
+                                    rag = LicenseExceptionRAG()
+                                    rag.display_license_exception_analysis(rag_result)
+                                else:
+                                    st.warning(f"⚠️ RAG分析でエラーが発生しました: {rag_result.get('error', '不明')}")
+                                    st.info("💡 Pinecone接続を確認してください。PINECONE_API_KEYが.envファイルに設定されているか確認してください。")
+                            
+                            except Exception as e:
+                                st.error(f"❌ RAGシステムエラー: {str(e)}")
+                                st.info("""
+                                **RAGシステムの設定**
+                                
+                                `.env`ファイルに以下を追加してください：
+                                ```
+                                PINECONE_API_KEY=pcsk_3a2fsG_JL8VwCUz3REyx76mdPG6erdmwazPNM2dU3Ra7c7P11saQz6ovw2aTdPPRiYaKbp
+                                ```
+                                """)
                         
                         # チャット履歴に保存
                         st.session_state.chat_history.append({
