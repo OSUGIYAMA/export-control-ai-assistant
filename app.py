@@ -419,7 +419,7 @@ def analyze_contract_with_gpt(contract_text, knowledge_base):
         response = client.chat.completions.create(
             model="gpt-4-turbo-preview",
             messages=[
-                {"role": "system", "content": "あなたは安全保障貿易管理の専門家です。外為法と米国EARに精通しています。"},
+                {"role": "system", "content": "あなたは米国EAR再輸出規制の専門家です。米国から輸入した品目を日本から他国へ再輸出する際の規制を分析します。日本の外為法は対象外です。"},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3,
