@@ -477,6 +477,34 @@ EAR_KNOWLEDGE = """
 - 記録の保管（5年間）
 """
 
+# General Prohibitions（一般禁止事項）の詳細
+GENERAL_PROHIBITIONS = """
+# 米国EAR 一般禁止事項（General Prohibitions）詳細
+
+## 重要：10の一般禁止事項（GP1-10）
+
+### GP4: 取引禁止リスト★必須チェック★
+- **DPL（Denied Persons List）**: 輸出権限はく奪者との取引禁止
+
+### GP5: エンドユース・エンドユーザー規制★必須チェック★
+- **Entity List（EL）**: 大量破壊兵器拡散懸念企業
+- **Unverified List（UVL）**: 検証未完了企業
+- **Military End User List（MEU）**: 軍事エンドユーザー
+
+### GP6: 禁輸国規制★必須チェック★
+- 北朝鮮、イラン、シリア、キューバ、クリミア、ロシア（制限）
+
+### GP7: 拡散活動支援禁止
+- 軍事インテリジェンス用途（中国、ロシア、ベラルーシ等）
+
+### GP8: 通過規制
+- ロシア、ベラルーシ、北朝鮮、中国等の経由
+
+### 統合スクリーニングリスト（CSL）
+URL: https://www.trade.gov/consolidated-screening-list
+取引前の必須チェックツール
+"""
+
 # システム情報
 SYSTEM_INFO = """
 # システム情報
@@ -492,11 +520,13 @@ SYSTEM_INFO = """
 - 外為法（外国為替及び外国貿易法）
 - 米国EAR（Export Administration Regulations）
 - ECCN番号データベース（Commerce Control List）
+- General Prohibitions（一般禁止事項）詳細
+- カントリーチャート（212カ国）
 """
 
 def get_full_knowledge_base():
     """完全なナレッジベースを取得"""
-    return f"{GAIAME_KNOWLEDGE}\n\n{EAR_KNOWLEDGE}\n\n{SYSTEM_INFO}"
+    return f"{GAIAME_KNOWLEDGE}\n\n{EAR_KNOWLEDGE}\n\n{GENERAL_PROHIBITIONS}\n\n{SYSTEM_INFO}"
 
 def get_gaiame_knowledge():
     """外為法のナレッジベースを取得"""
