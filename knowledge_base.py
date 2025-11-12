@@ -1,10 +1,10 @@
 """
-安全保障貿易管理ナレッジベース
-外為法と米国EARの判断フローに関する知識を管理
+米国EAR再輸出規制ナレッジベース
+日本から米国原産品を再輸出する場合の判断フローに関する知識を管理
 """
 
-# 外為法ナレッジベース
-GAIAME_KNOWLEDGE = """
+# 外為法ナレッジベース（コメントアウト - EAR再輸出のみに特化）
+# GAIAME_KNOWLEDGE = """
 # 外為法（外国為替及び外国貿易法）判断フロー
 
 ## 1. 基本概念
@@ -475,7 +475,7 @@ EAR_KNOWLEDGE = """
 - 従業員への教育・研修
 - デューデリジェンスの実施
 - 記録の保管（5年間）
-"""
+# """
 
 # General Prohibitions（一般禁止事項）の詳細
 GENERAL_PROHIBITIONS = """
@@ -509,24 +509,33 @@ URL: https://www.trade.gov/consolidated-screening-list
 SYSTEM_INFO = """
 # システム情報
 
-本システムは輸出管理業務を支援するAIツールです。
+本システムは**米国EAR再輸出規制**の判断を支援するAIツールです。
+
+## 対象範囲
+**米国から輸入した品目を日本から他国へ再輸出する場合**に特化
 
 ## 免責事項
 - 本システムは参考情報を提供するものであり、法的助言ではありません
-- 最終的な判断は専門家や関係当局にご相談ください
+- 最終的な判断は米国商務省BIS（Bureau of Industry and Security）や専門家にご相談ください
 - AI分析結果には誤りが含まれる可能性があります
 
 ## データソース
-- 外為法（外国為替及び外国貿易法）
 - 米国EAR（Export Administration Regulations）
-- ECCN番号データベース（Commerce Control List）
-- General Prohibitions（一般禁止事項）詳細
+- ECCN番号データベース（Commerce Control List - 1,557項目）
+- General Prohibitions（一般禁止事項GP1-10）
 - カントリーチャート（212カ国）
+- Entity List / DPL / UVL / MEU
+
+## 分析対象外
+- 日本の外為法（外国為替及び外国貿易法）
+- 米国外で製造された非米国原産品
+- 米国コンテンツ25%未満の外国製品
 """
 
 def get_full_knowledge_base():
-    """完全なナレッジベースを取得"""
-    return f"{GAIAME_KNOWLEDGE}\n\n{EAR_KNOWLEDGE}\n\n{GENERAL_PROHIBITIONS}\n\n{SYSTEM_INFO}"
+    """完全なナレッジベースを取得（EAR再輸出のみ）"""
+    # return f"{GAIAME_KNOWLEDGE}\n\n{EAR_KNOWLEDGE}\n\n{GENERAL_PROHIBITIONS}\n\n{SYSTEM_INFO}"
+    return f"{EAR_KNOWLEDGE}\n\n{GENERAL_PROHIBITIONS}\n\n{SYSTEM_INFO}"
 
 def get_gaiame_knowledge():
     """外為法のナレッジベースを取得"""

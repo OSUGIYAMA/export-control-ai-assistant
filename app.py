@@ -32,8 +32,8 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Page config
 st.set_page_config(
-    page_title="安全保障貿易管理 判断支援システム",
-    page_icon="🔒",
+    page_title="米国EAR再輸出規制 判断支援システム",
+    page_icon="🇺🇸",
     layout="wide"
 )
 
@@ -636,8 +636,8 @@ def main():
                 )
     
     with tab2:
-        st.markdown('<div class="section-header">💬 輸出管理チャット相談</div>', unsafe_allow_html=True)
-        st.info("品目名と仕向地を入力すると、ECCN番号を自動判定し、カントリーチャート分析を行います。")
+        st.markdown('<div class="section-header">💬 米国EAR再輸出規制 チャット相談</div>', unsafe_allow_html=True)
+        st.info("🇺🇸 米国から輸入した品目を日本から他国へ再輸出する際の米国EAR規制を分析します。品目名と仕向地を入力してください。")
         
         # Enhanced Chat interface with structured input
         col1, col2 = st.columns(2)
@@ -675,11 +675,15 @@ def main():
                     
                     # AIプロンプト構築
                     chat_prompt = f"""
-あなたは米国輸出管理規則（EAR）の専門家です。以下のステップに従って厳密に分析してください。
+あなたは米国輸出管理規則（EAR）の再輸出規制の専門家です。
+
+【重要な前提】
+このシステムは「米国から輸入した品目を日本から他国へ再輸出する場合」の米国EAR規制のみを分析します。
+日本の外為法は対象外です。
 
 【ユーザー入力】
-- 品目名: {product_input}
-- 仕向地: {destination_input if destination_input else '未指定'}
+- 品目名（米国原産品）: {product_input}
+- 再輸出先（日本→他国）: {destination_input if destination_input else '未指定'}
 - 追加情報: {additional_info if additional_info else 'なし'}
 
 【分析手順】
@@ -772,7 +776,7 @@ def main():
                         response = client.chat.completions.create(
                             model="gpt-4-turbo-preview",
                             messages=[
-                                {"role": "system", "content": "あなたは米国輸出管理規則（EAR）とECCN番号の専門家です。品目からECCN番号を正確に判定し、カントリーチャートに基づいて分析します。"},
+                                {"role": "system", "content": "あなたは米国EAR再輸出規制の専門家です。米国から輸入した品目を日本から他国へ再輸出する際の規制を分析します。日本の外為法は分析対象外です。ECCN番号判定、カントリーチャート分析、General Prohibitions（GP4-10）チェックを実施してください。"},
                                 {"role": "user", "content": chat_prompt}
                             ],
                             temperature=0.2,
