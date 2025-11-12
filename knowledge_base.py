@@ -3,8 +3,10 @@
 日本から米国原産品を再輸出する場合の判断フローに関する知識を管理
 """
 
-# 外為法ナレッジベース（コメントアウト - EAR再輸出のみに特化）
-# GAIAME_KNOWLEDGE = """
+# 外為法ナレッジベース（削除 - EAR再輸出のみに特化）
+# 以下は参考用に残していますが、システムでは使用していません
+
+"""
 # 外為法（外国為替及び外国貿易法）判断フロー
 
 ## 1. 基本概念
@@ -475,7 +477,7 @@ EAR_KNOWLEDGE = """
 - 従業員への教育・研修
 - デューデリジェンスの実施
 - 記録の保管（5年間）
-# """
+"""
 
 # General Prohibitions（一般禁止事項）の詳細
 GENERAL_PROHIBITIONS = """
@@ -534,12 +536,7 @@ SYSTEM_INFO = """
 
 def get_full_knowledge_base():
     """完全なナレッジベースを取得（EAR再輸出のみ）"""
-    # return f"{GAIAME_KNOWLEDGE}\n\n{EAR_KNOWLEDGE}\n\n{GENERAL_PROHIBITIONS}\n\n{SYSTEM_INFO}"
     return f"{EAR_KNOWLEDGE}\n\n{GENERAL_PROHIBITIONS}\n\n{SYSTEM_INFO}"
-
-def get_gaiame_knowledge():
-    """外為法のナレッジベースを取得"""
-    return GAIAME_KNOWLEDGE
 
 def get_ear_knowledge():
     """米国EARのナレッジベースを取得"""
