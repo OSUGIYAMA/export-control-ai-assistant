@@ -45,7 +45,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Page config
 st.set_page_config(
-    page_title="米国EAR再輸出規制 判断支援システム",
+    page_title="US EAR Re-export Compliance Assistant",
     page_icon="🇺🇸",
     layout="wide"
 )
@@ -546,109 +546,109 @@ def load_knowledge_base():
     return get_full_knowledge_base()
 
 def analyze_contract_with_gpt(contract_text, knowledge_base):
-    """GPTで契約書を分析（米国EAR再輸出規制のみ）"""
+    """Analyze contract with GPT (US EAR Re-export Regulations only)"""
     
-    # ECCN番号データベースを準備
+    # Prepare ECCN database
     eccn_json = st.session_state.sample_data.get('eccn_json')
     eccn_data_text = ""
     if eccn_json and 'ccl_categories' in eccn_json:
-        eccn_data_text = "\n【ECCN番号データベース（完全版）】\n"
+        eccn_data_text = "\n[ECCN Number Database (Complete)]\n"
         for category in eccn_json['ccl_categories']:
             eccn_data_text += f"\n## Category {category.get('category_number', '')}: {category.get('title', '')}\n"
             for group in category.get('product_groups', []):
                 eccn_data_text += f"\n### {group.get('group_title', '')}\n"
-                for item in group.get('items', [])[:10]:  # 各グループから最大10項目
+                for item in group.get('items', [])[:10]:  # Max 10 items from each group
                     eccn_data_text += f"- **{item.get('eccn', '')}**: {item.get('description', '')[:200]}...\n"
     
-    # カントリーチャートデータを準備
+    # Prepare Country Chart data
     country_chart = st.session_state.sample_data.get('country_chart')
     country_chart_text = ""
     if country_chart is not None and not country_chart.empty:
-        country_chart_text = "\n【カントリーチャート（完全版）】\n"
-        country_chart_text += "以下は米国EARカントリーチャートの実データです。\'X\'は許可が必要であることを示します。\n\n"
-        # 最初の30カ国程度を含める（トークン制限を考慮）
+        country_chart_text = "\n[Country Chart (Complete)]\n"
+        country_chart_text += "Below is actual US EAR Country Chart data.\'X\'は許可が必要であることを示します。\n\n"
+        # Include first ~30 countries (considering token limit)
         for idx, row in country_chart.head(30).iterrows():
             country_name = row.iloc[0]
             country_chart_text += f"\n**{country_name}**:\n"
-            # 主要な規制理由カラムのみ表示
+            # Show only key regulation reason columns
             key_columns = ['NS 1', 'NS 2', 'MT 1', 'NP 1', 'NP 2', 'CB 1', 'AT 1']
             for col in key_columns:
                 if col in row.index and pd.notna(row[col]):
                     country_chart_text += f"  - {col}: {row[col]}\n"
     
     prompt = f"""
-あなたは米国EAR再輸出規制の専門家です。以下の契約書を分析し、米国EAR規制について判断してください。
+You are an expert on US EAR re-export regulations. Analyze the following contract and determine US EAR regulatory requirements.
 
-【重要な前提】
-このシステムは「米国から輸入した品目を日本から他国へ再輸出する場合」の米国EAR規制のみを分析します。
-日本の外為法は分析対象外です。
+[Important Prerequisites]
+This system analyzes only US EAR regulations for "re-exporting US-origin items from Japan to other countries".
+Japanese Foreign Exchange and Foreign Trade Act is outside the scope.
 
-【契約書内容】
-{contract_text[:5000]}  # トークン制限のため最初の5000文字
+[Contract Content]
+{contract_text[:5000]}  # First 5000 chars due to token limit
 
 {eccn_data_text[:3000]}
 
 {country_chart_text[:3000]}
 
-【ナレッジベース（参考）】
+[Knowledge Base (Reference)]
 {knowledge_base[:1000]}
 
-以下の項目について詳細に分析してください：
+Please analyze the following items in detail:
 
-## 1. 契約情報の抽出
-- 品目名・製品名（米国原産品かどうか）
-- 再輸出先（日本→他国）
-- 需要者（エンドユーザー）情報
-- 最終用途（End Use）
-- 契約金額
-- 納期
+## 1. Contract Information Extraction
+- Product Name・製品名（whether US-origin）
+- Re-export destination (Japan → Other country)
+- End User情報
+- End Use
+- Contract Value
+- Delivery Date
 
-## 2. 米国EAR再輸出判断フロー分析
+## 2. US EAR Re-export Decision Flow Analysis
 
-### A. EAR対象品目の再輸出に該当するか
-米国原産品・組込品・外国直接製品の可能性を評価
+### A. Does it qualify as re-export of EAR-controlled items?
+Evaluate possibilities of US-origin items, incorporated items, or foreign direct products
 
-### B. ECCN番号の判定
-上記のECCN番号データベースを参照し、最も適切なECCN番号を判定してください。
-- 推定ECCN番号（5桁の番号、例：3A001、5A002、またはEAR99）
-- カテゴリー（1桁目の意味）
-- グループ（2桁目の意味）
-- 規制理由（3桁目：NS=国家安全保障、MT=ミサイル技術、NP=核不拡散、等）
-- 選定理由（なぜこのECCN番号を選んだか詳細に説明）
+### B. ECCN Number Determination
+Refer to the ECCN database above and determine the most appropriate ECCN number.
+- Estimated ECCN number (5-digit code, e.g., 3A001, 5A002, or EAR99)
+- Category (1st digit meaning)
+- Group (2nd digit meaning)
+- Reason for Control (3rd digit: NS=National Security, MT=Missile Tech, NP=Nuclear Non-Proliferation, etc.)
+- Selection rationale (explain in detail why this ECCN was chosen)
 
-### C. カントリーチャート分析
-上記のカントリーチャートデータを参照し、仕向国に対する規制を判定してください。
-- 仕向国名
-- 該当する規制理由（NS 1, NS 2, MT 1, NP 1, 等）
-- 各規制理由での許可要否（\'X\'マークがあれば許可必要）
-- 総合判定（許可必要 or 許可例外が適用可能 or 許可不要）
+### C. Country Chart Analysis
+Refer to the Country Chart data above and determine regulations for the destination country.
+- Destination country
+- Applicable reasons for control (NS 1, NS 2, MT 1, NP 1, etc.)
+- License requirement for each reason (\'X\' mark indicates license required)
+- Overall determination (License Required or License Exception Available or No License Required)
 
-### D. 許可例外の検討
-適用可能な許可例外（LVS, GBS, TSR, TMP, ENC等）を検討
+### D. License Exception Review
+Review applicable license exceptions (LVS, GBS, TSR, TMP, ENC, etc.)
 
-### E. 禁輸国・リスト規制
+### E. Embargo Countries & Restricted Lists
 - DPL（Denied Persons List）該当チェック
 - Entity List該当チェック
-- 禁輸国（北朝鮮、イラン、シリア、キューバ、クリミア）該当チェック
+- Check for embargo countries (North Korea, Iran, Syria, Cuba, Crimea)
 
-## 3. 総合判定とリスク評価
-- **米国EAR判定**: 許可必要 / 許可例外適用可能 / 許可不要
-- **リスクレベル**: 高 / 中 / 低
-- **推奨アクション**: 具体的な次のステップ
+## 3. Overall Assessment & Risk Evaluation
+- **US EAR Determination**: License Required / License Exception Available / No License Required
+- **Risk Level**: High / Medium / Low
+- **Recommended Actions**: Specific next steps
 
-## 4. 必要な手続き
-BISへの許可申請が必要な場合の具体的な手順と窓口
+## 4. Required Procedures
+Specific procedures and contact points for BIS license application if required
 
-**重要**: 外為法については言及しないでください。このシステムは米国EAR規制のみを扱います。
+**Important**: Do not mention Japanese FEFTA. This system only handles US EAR regulations.
 
-明確で構造化された形式で回答してください。
+Please respond in a clear and structured format.
 """
 
     try:
         response = client.chat.completions.create(
             model="gpt-4-turbo-preview",
             messages=[
-                {"role": "system", "content": "あなたは米国EAR再輸出規制の専門家です。米国から輸入した品目を日本から他国へ再輸出する際の規制を分析します。日本の外為法は対象外です。"},
+                {"role": "system", "content": "You are an expert on US EAR re-export regulations. You analyze regulations for re-exporting US-origin items from Japan to other countries. Japanese FEFTA is out of scope."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3,
@@ -662,13 +662,13 @@ BISへの許可申請が必要な場合の具体的な手順と窓口
 
 
 def analyze_contract_step_by_step(contract_text, knowledge_base, result_container):
-    """GPTで契約書を段階的に分析（米国EAR再輸出規制のみ）"""
+    """Analyze contract step by step with GPT (US EAR Re-export Regulations only)"""
     
-    # ECCN番号データベースを準備
+    # Prepare ECCN database
     eccn_json = st.session_state.sample_data.get('eccn_json')
     eccn_data_text = ""
     if eccn_json and 'ccl_categories' in eccn_json:
-        eccn_data_text = "\n【ECCN番号データベース（完全版）】\n"
+        eccn_data_text = "\n[ECCN Number Database (Complete)]\n"
         for category in eccn_json['ccl_categories']:
             eccn_data_text += f"\n## Category {category.get('category_number', '')}: {category.get('title', '')}\n"
             for group in category.get('product_groups', []):
@@ -676,12 +676,12 @@ def analyze_contract_step_by_step(contract_text, knowledge_base, result_containe
                 for item in group.get('items', [])[:10]:
                     eccn_data_text += f"- **{item.get('eccn', '')}**: {item.get('description', '')[:200]}...\n"
     
-    # カントリーチャートデータを準備
+    # Prepare Country Chart data
     country_chart = st.session_state.sample_data.get('country_chart')
     country_chart_text = ""
     if country_chart is not None and not country_chart.empty:
-        country_chart_text = "\n【カントリーチャート（完全版）】\n"
-        country_chart_text += "以下は米国EARカントリーチャートの実データです。\'X\'は許可が必要であることを示します。\n\n"
+        country_chart_text = "\n[Country Chart (Complete)]\n"
+        country_chart_text += "Below is actual US EAR Country Chart data.\'X\'は許可が必要であることを示します。\n\n"
         for idx, row in country_chart.head(30).iterrows():
             country_name = row.iloc[0]
             country_chart_text += f"\n**{country_name}**:\n"
@@ -690,27 +690,27 @@ def analyze_contract_step_by_step(contract_text, knowledge_base, result_containe
                 if col in row.index and pd.notna(row[col]):
                     country_chart_text += f"  - {col}: {row[col]}\n"
     
-    # 分析結果を格納
+    # Analysis Resultsを格納
     full_analysis = ""
     
     # ステップ1: 契約情報の抽出
-    with st.spinner("📝 ステップ1: 契約情報を抽出中..."):
+    with st.spinner("📝 Step 1: Extracting contract information..."):
         step1_prompt = f"""
-あなたは米国EAR再輸出規制の専門家です。以下の契約書から重要な情報を抽出してください。
+あなたは米国EAR再輸出規制の専門家です。Extract important information from the following contract.
 
-【契約書内容】
+[Contract Content]
 {contract_text[:3000]}
 
-以下の情報を抽出してください：
-## 1. 契約情報の抽出
-- 品目名・製品名（米国原産品かどうか）
-- 再輸出先（日本→他国）
-- 需要者（エンドユーザー）情報
-- 最終用途（End Use）
-- 契約金額
-- 納期
+Extract the following information:
+## 1. Contract Information Extraction
+- Product Name・製品名（whether US-origin）
+- Re-export destination (Japan → Other country)
+- End User情報
+- End Use
+- Contract Value
+- Delivery Date
 
-簡潔に箇条書きで回答してください。
+Please respond concisely in bullet points.
 """
         try:
             response = client.chat.completions.create(
@@ -723,29 +723,29 @@ def analyze_contract_step_by_step(contract_text, knowledge_base, result_containe
                 max_tokens=500
             )
             step1_result = response.choices[0].message.content
-            full_analysis += f"## 1. 契約情報の抽出\n{step1_result}\n\n"
+            full_analysis += f"## 1. Contract Information Extraction\n{step1_result}\n\n"
             
             with result_container:
-                st.markdown("### 📝 ステップ1: 契約情報の抽出")
+                st.markdown("### 📝 Step 1: Contract Information Extraction")
                 st.markdown(step1_result)
                 st.markdown("---")
         except Exception as e:
-            st.error(f"ステップ1エラー: {str(e)}")
+            st.error(f"Step 1 Error: {str(e)}")
             return None
     
-    # ステップ2-A: EAR対象品目判定
-    with st.spinner("🔍 ステップ2-A: EAR対象品目を判定中..."):
+    # ステップ2-A: EAR対象Product判定
+    with st.spinner("🔍 Step 2-A: Determining EAR-controlled items..."):
         step2a_prompt = f"""
 {contract_text[:2000]}
 
-上記の契約について、以下を判定してください：
+For the above contract, determine the following:
 
-### A. EAR対象品目の再輸出に該当するか
-- 米国原産品の可能性
-- 米国製品の組込品の可能性
-- 外国直接製品（FDP）ルールの該当性
+### A. Does it qualify as re-export of EAR-controlled items?
+- Possibility of US-origin items
+- Possibility of incorporated US items
+- Applicability of Foreign Direct Product (FDP) rule
 
-簡潔に判定してください。
+Please make a concise determination.
 """
         try:
             response = client.chat.completions.create(
@@ -758,32 +758,32 @@ def analyze_contract_step_by_step(contract_text, knowledge_base, result_containe
                 max_tokens=400
             )
             step2a_result = response.choices[0].message.content
-            full_analysis += f"### A. EAR対象品目の判定\n{step2a_result}\n\n"
+            full_analysis += f"### A. EAR対象Productの判定\n{step2a_result}\n\n"
             
             with result_container:
-                st.markdown("### 🔍 ステップ2-A: EAR対象品目の判定")
+                st.markdown("### 🔍 Step 2-A: EAR-Controlled Items Determination")
                 st.markdown(step2a_result)
                 st.markdown("---")
         except Exception as e:
-            st.error(f"ステップ2-Aエラー: {str(e)}")
+            st.error(f"Step 2-A Error: {str(e)}")
     
     # ステップ2-B: ECCN番号判定
-    with st.spinner("🔢 ステップ2-B: ECCN番号を判定中..."):
+    with st.spinner("🔢 Step 2-B: Determining ECCN number..."):
         step2b_prompt = f"""
-品目: {contract_text[:1000]}
+Product: {contract_text[:1000]}
 
 {eccn_data_text[:2500]}
 
-上記のECCN番号データベースを参照し、最も適切なECCN番号を判定してください。
+Refer to the ECCN database above and determine the most appropriate ECCN number.
 
-### B. ECCN番号の判定
-- **推定ECCN番号**: [5桁の番号、例：3A001、5A002、またはEAR99]
-- **カテゴリー**: [1桁目の意味]
-- **グループ**: [2桁目の意味]
-- **規制理由**: [3桁目：NS=国家安全保障、MT=ミサイル技術、等]
-- **選定理由**: [なぜこのECCN番号を選んだか]
+### B. ECCN Number Determination
+- **推定ECCN番号**: [5桁の番号、e.g., 3A001、5A002、またはEAR99]
+- **Category**: [1桁目の意味]
+- **Group**: [2桁目の意味]
+- **Reason for Control**: [3桁目：NS=National Security、MT=Missile Technology、等]
+- **Selection Rationale**: [Why this ECCN was chosen]
 
-上記の形式で回答してください。
+Please respond in the format above.
 """
         try:
             response = client.chat.completions.create(
@@ -796,31 +796,31 @@ def analyze_contract_step_by_step(contract_text, knowledge_base, result_containe
                 max_tokens=600
             )
             step2b_result = response.choices[0].message.content
-            full_analysis += f"### B. ECCN番号の判定\n{step2b_result}\n\n"
+            full_analysis += f"### B. ECCN Number Determination\n{step2b_result}\n\n"
             
             with result_container:
-                st.markdown("### 🔢 ステップ2-B: ECCN番号の判定")
+                st.markdown("### 🔢 Step 2-B: ECCN Number Determination")
                 st.markdown(step2b_result)
                 st.markdown("---")
         except Exception as e:
-            st.error(f"ステップ2-Bエラー: {str(e)}")
+            st.error(f"Step 2-B Error: {str(e)}")
     
     # ステップ2-C: カントリーチャート分析
-    with st.spinner("🗺️ ステップ2-C: カントリーチャートを分析中..."):
+    with st.spinner("🗺️ Step 2-C: Analyzing Country Chart..."):
         step2c_prompt = f"""
-品目: {contract_text[:1000]}
+Product: {contract_text[:1000]}
 
 {country_chart_text[:2500]}
 
-上記のカントリーチャートデータを参照し、仕向国に対する規制を判定してください。
+Refer to the Country Chart data above and determine regulations for the destination country.
 
-### C. カントリーチャート分析
-- 仕向国名
-- 該当する規制理由（NS 1, NS 2, MT 1, NP 1, 等）
-- 各規制理由での許可要否（\'X\'マークがあれば許可必要）
-- 総合判定（許可必要 or 許可例外が適用可能 or 許可不要）
+### C. Country Chart Analysis
+- Destination country
+- Applicable reasons for control (NS 1, NS 2, MT 1, NP 1, etc.)
+- License requirement for each reason (\'X\' mark indicates license required)
+- Overall determination (License Required or License Exception Available or No License Required)
 
-上記の形式で回答してください。
+Please respond in the format above.
 """
         try:
             response = client.chat.completions.create(
@@ -833,26 +833,26 @@ def analyze_contract_step_by_step(contract_text, knowledge_base, result_containe
                 max_tokens=600
             )
             step2c_result = response.choices[0].message.content
-            full_analysis += f"### C. カントリーチャート分析\n{step2c_result}\n\n"
+            full_analysis += f"### C. Country Chart Analysis\n{step2c_result}\n\n"
             
             with result_container:
-                st.markdown("### 🗺️ ステップ2-C: カントリーチャート分析")
+                st.markdown("### 🗺️ Step 2-C: Country Chart Analysis")
                 st.markdown(step2c_result)
                 st.markdown("---")
         except Exception as e:
-            st.error(f"ステップ2-Cエラー: {str(e)}")
+            st.error(f"Step 2-C Error: {str(e)}")
     
     # ステップ2-D: 許可例外の検討
-    with st.spinner("📋 ステップ2-D: 許可例外を検討中..."):
+    with st.spinner("📋 Step 2-D: Reviewing License Exceptions..."):
         step2d_prompt = f"""
-品目: {contract_text[:1000]}
+Product: {contract_text[:1000]}
 
-### D. 許可例外の検討
-適用可能な許可例外（LVS, GBS, TSR, TMP, ENC等）について検討してください。
+### D. License Exception Review
+Applicable license exceptions（LVS, GBS, TSR, TMP, ENC等）について検討してください。
 
-- 適用可能な許可例外
-- 適用条件
-- 判定理由
+- Applicable license exceptions
+- Application conditions
+- Determination rationale
 
 簡潔に回答してください。
 """
@@ -867,29 +867,29 @@ def analyze_contract_step_by_step(contract_text, knowledge_base, result_containe
                 max_tokens=500
             )
             step2d_result = response.choices[0].message.content
-            full_analysis += f"### D. 許可例外の検討\n{step2d_result}\n\n"
+            full_analysis += f"### D. License Exception Review\n{step2d_result}\n\n"
             
             with result_container:
-                st.markdown("### 📋 ステップ2-D: 許可例外の検討")
+                st.markdown("### 📋 Step 2-D: License Exception Review")
                 st.markdown(step2d_result)
                 st.markdown("---")
         except Exception as e:
-            st.error(f"ステップ2-Dエラー: {str(e)}")
+            st.error(f"Step 2-D Error: {str(e)}")
     
     # ステップ2-E: 禁輸国・リスト規制
-    with st.spinner("🚨 ステップ2-E: 禁輸国・リスト規制をチェック中..."):
+    with st.spinner("🚨 Step 2-E: Checking Embargo & Restricted Lists..."):
         step2e_prompt = f"""
-品目: {contract_text[:1000]}
+Product: {contract_text[:1000]}
 
-### E. 禁輸国・リスト規制
-以下をチェックしてください：
+### E. Embargo Countries & Restricted Lists
+Please check the following:
 
 - DPL（Denied Persons List）該当チェック
 - Entity List該当チェック
-- 禁輸国（北朝鮮、イラン、シリア、キューバ、クリミア）該当チェック
+- Check for embargo countries (North Korea, Iran, Syria, Cuba, Crimea)
 - Military End User List該当チェック
 
-簡潔に判定してください。
+Please make a concise determination.
 """
         try:
             response = client.chat.completions.create(
@@ -902,29 +902,29 @@ def analyze_contract_step_by_step(contract_text, knowledge_base, result_containe
                 max_tokens=400
             )
             step2e_result = response.choices[0].message.content
-            full_analysis += f"### E. 禁輸国・リスト規制\n{step2e_result}\n\n"
+            full_analysis += f"### E. Embargo Countries & Restricted Lists\n{step2e_result}\n\n"
             
             with result_container:
-                st.markdown("### 🚨 ステップ2-E: 禁輸国・リスト規制")
+                st.markdown("### 🚨 Step 2-E: Embargo & Restricted Lists")
                 st.markdown(step2e_result)
                 st.markdown("---")
         except Exception as e:
-            st.error(f"ステップ2-Eエラー: {str(e)}")
+            st.error(f"Step 2-E Error: {str(e)}")
     
     # ステップ3: 総合判定とリスク評価
-    with st.spinner("📊 ステップ3: 総合判定とリスク評価中..."):
+    with st.spinner("📊 Step 3: Overall Assessment & Risk Evaluation..."):
         step3_prompt = f"""
-これまでの分析結果：
+Analysis results so far:
 {full_analysis}
 
-上記の分析結果を踏まえて、総合判定を行ってください。
+Based on the analysis results above, make an overall assessment.
 
-## 3. 総合判定とリスク評価
-- **米国EAR判定**: 許可必要 / 許可例外適用可能 / 許可不要
-- **リスクレベル**: 高 / 中 / 低
-- **推奨アクション**: 具体的な次のステップ
+## 3. Overall Assessment & Risk Evaluation
+- **US EAR Determination**: License Required / License Exception Available / No License Required
+- **Risk Level**: High / Medium / Low
+- **Recommended Actions**: Specific next steps
 
-明確に判定してください。
+Please make a clear determination.
 """
         try:
             response = client.chat.completions.create(
@@ -937,22 +937,22 @@ def analyze_contract_step_by_step(contract_text, knowledge_base, result_containe
                 max_tokens=600
             )
             step3_result = response.choices[0].message.content
-            full_analysis += f"## 3. 総合判定とリスク評価\n{step3_result}\n\n"
+            full_analysis += f"## 3. Overall Assessment & Risk Evaluation\n{step3_result}\n\n"
             
             with result_container:
-                st.markdown("### 📊 ステップ3: 総合判定とリスク評価")
+                st.markdown("### 📊 Step 3: Overall Assessment & Risk Evaluation")
                 st.markdown(step3_result)
                 st.markdown("---")
         except Exception as e:
-            st.error(f"ステップ3エラー: {str(e)}")
+            st.error(f"Step 3 Error: {str(e)}")
     
     # ステップ4: 必要な手続き
-    with st.spinner("📝 ステップ4: 必要な手続きを確認中..."):
+    with st.spinner("📝 Step 4: Determining Required Procedures..."):
         step4_prompt = f"""
-総合判定: {step3_result[:500]}
+Overall Assessment: {step3_result[:500]}
 
-## 4. 必要な手続き
-BISへの許可申請が必要な場合の具体的な手順と窓口を説明してください。
+## 4. Required Procedures
+Specific procedures and contact points for BIS license application if requiredを説明してください。
 
 簡潔に回答してください。
 """
@@ -967,39 +967,39 @@ BISへの許可申請が必要な場合の具体的な手順と窓口を説明�
                 max_tokens=500
             )
             step4_result = response.choices[0].message.content
-            full_analysis += f"## 4. 必要な手続き\n{step4_result}\n\n"
+            full_analysis += f"## 4. Required Procedures\n{step4_result}\n\n"
             
             with result_container:
-                st.markdown("### 📝 ステップ4: 必要な手続き")
+                st.markdown("### 📝 Step 4: Required Procedures")
                 st.markdown(step4_result)
         except Exception as e:
-            st.error(f"ステップ4エラー: {str(e)}")
+            st.error(f"Step 4 Error: {str(e)}")
     
     return full_analysis
 
 
 
 def analyze_chat_step_by_step(product_input, destination_input, additional_info, eccn_context, chart_context, knowledge_base, result_container):
-    """チャット相談用の段階的分析"""
+    """Step-by-step analysis for chat consultation"""
     
     full_analysis = ""
     
     # ステップ1: ECCN番号判定
-    with st.spinner("🔢 ステップ1: ECCN番号を判定中..."):
+    with st.spinner("🔢 Step 1: Determining ECCN number..."):
         step1_prompt = f"""
 あなたは米国輸出管理規則（EAR）の専門家です。
 
-品目名: {product_input}
+Product Name: {product_input}
 
 {eccn_context[:2500]}
 
-上記のECCN番号データベースを参照し、最も適切なECCN番号を判定してください。
+Refer to the ECCN database above and determine the most appropriate ECCN number.
 
 必ず以下の形式で回答：
 - **推定ECCN番号**: [5桁の番号] または EAR99
 - **分類**: [カテゴリー名]
-- **グループ**: [グループ名]
-- **規制理由**: [NS, AT, MT等]
+- **Group**: [グループ名]
+- **Reason for Control**: [NS, AT, MT等]
 - **選定理由**: [詳細な理由]
 """
         try:
@@ -1016,26 +1016,26 @@ def analyze_chat_step_by_step(product_input, destination_input, additional_info,
             full_analysis += f"## ステップ1: ECCN番号判定\n{step1_result}\n\n"
             
             with result_container:
-                st.markdown("### 🔢 ステップ1: ECCN番号判定")
+                st.markdown("### 🔢 Step 1: ECCN Number Determination")
                 st.markdown(step1_result)
                 st.markdown("---")
         except Exception as e:
-            st.error(f"ステップ1エラー: {str(e)}")
+            st.error(f"Step 1 Error: {str(e)}")
             return None
     
     # ステップ2: カントリーチャート分析
     if destination_input:
-        with st.spinner("🗺️ ステップ2: カントリーチャートを分析中..."):
+        with st.spinner("🗺️ Step 2: Analyzing Country Chart..."):
             step2_prompt = f"""
-品目: {product_input}
-仕向地: {destination_input}
+Product: {product_input}
+Destination: {destination_input}
 
 {chart_context[:2500]}
 
-上記のカントリーチャートを参照し、仕向地に対する規制を判定してください。
+上記のカントリーチャートを参照し、Destinationに対する規制を判定してください。
 
 必ず以下を分析：
-- 仕向地名
+- Destination名
 - 規制理由（NS, AT, MT等）ごとの許可要否
 - 「×」マークがある場合は許可必要
 - 総合判定
@@ -1054,29 +1054,29 @@ def analyze_chat_step_by_step(product_input, destination_input, additional_info,
                 full_analysis += f"## ステップ2: カントリーチャート分析\n{step2_result}\n\n"
                 
                 with result_container:
-                    st.markdown("### 🗺️ ステップ2: カントリーチャート分析")
+                    st.markdown("### 🗺️ Step 2: Country Chart Analysis")
                     st.markdown(step2_result)
                     st.markdown("---")
             except Exception as e:
                 st.error(f"ステップ2エラー: {str(e)}")
     
     # ステップ3: General Prohibitions確認
-    with st.spinner("🚨 ステップ3: General Prohibitionsを確認中..."):
+    with st.spinner("🚨 Step 3: Checking General Prohibitions..."):
         step3_prompt = f"""
-品目: {product_input}
-仕向地: {destination_input if destination_input else '未指定'}
+Product: {product_input}
+Destination: {destination_input if destination_input else 'Not specified'}
 
 {knowledge_base[:1500]}
 
-以下をチェックしてください：
+Please check the following:
 
-**GP4: 取引禁止リスト（DPL）**
-**GP5: エンドユース・エンドユーザー規制（Entity List）**
-**GP6: 禁輸国規制**
-**GP7: 拡散活動支援禁止**
-**GP8: 通過規制**
+**GP4: Denied Parties Lists（DPL）**
+**GP5: End-Use/End-User Controls（Entity List）**
+**GP6: Embargo Countries**
+**GP7: Proliferation Activities Prohibition**
+**GP8: Transit Controls**
 
-各項目について該当の有無を判定してください。
+Determine applicability for each item.
 """
         try:
             response = client.chat.completions.create(
@@ -1092,20 +1092,20 @@ def analyze_chat_step_by_step(product_input, destination_input, additional_info,
             full_analysis += f"## ステップ3: General Prohibitions\n{step3_result}\n\n"
             
             with result_container:
-                st.markdown("### 🚨 ステップ3: General Prohibitions確認")
+                st.markdown("### 🚨 Step 3: General Prohibitions Check")
                 st.markdown(step3_result)
                 st.markdown("---")
         except Exception as e:
-            st.error(f"ステップ3エラー: {str(e)}")
+            st.error(f"Step 3 Error: {str(e)}")
     
     # ステップ4: 総合判定
-    with st.spinner("📊 ステップ4: 総合判定とリスク評価中..."):
+    with st.spinner("📊 Step 4: Overall Assessment & Risk Evaluation..."):
         step4_prompt = f"""
-これまでの分析結果：
+Analysis results so far:
 
 {full_analysis}
 
-追加情報: {additional_info if additional_info else 'なし'}
+Additional Info: {additional_info if additional_info else 'None'}
 
 上記を踏まえて、総合判定を行ってください。
 
@@ -1113,15 +1113,15 @@ def analyze_chat_step_by_step(product_input, destination_input, additional_info,
 
 ### 📊 リスク評価
 - **リスクレベル**: ⚠️ 高 / ⚠️ 中 / ✅ 低
-- **許可申請の要否**: 必要 / 要確認 / 不要
+- **License Application Requirement**: 必要 / 要確認 / 不要
 
 ### 🚨 警告事項（該当する場合）
 [該当するGeneral Prohibitions]
 
 ### 📋 推奨アクション
-1. [具体的な次のステップ]
-2. [確認すべき事項]
-3. [申請が必要な場合の手順]
+1. [Specific next steps]
+2. [Items to verify]
+3. [Procedures if application required]
 """
         try:
             response = client.chat.completions.create(
@@ -1141,7 +1141,7 @@ def analyze_chat_step_by_step(product_input, destination_input, additional_info,
                 st.markdown(step4_result)
                 st.markdown("---")
         except Exception as e:
-            st.error(f"ステップ4エラー: {str(e)}")
+            st.error(f"Step 4 Error: {str(e)}")
     
     return full_analysis
 
@@ -1157,7 +1157,7 @@ def main():
     # Subtitle with description
     st.markdown('''
     <div style="text-align: center; margin-top: -1.5rem; margin-bottom: 2.5rem; color: #64748b; font-size: 1.1rem; font-weight: 500;">
-        米国EAR再輸出規制の判断を、AI技術でスマートにサポート
+        Smart AI-Powered Analysis for US EAR Re-export Regulations
     </div>
     ''', unsafe_allow_html=True)
     
@@ -1212,28 +1212,28 @@ def main():
         </div>
         ''', unsafe_allow_html=True)
         
-        st.markdown("### 📚 システム情報")
+        st.markdown("### 📚 System Information")
         st.info("""
-        **主な機能**
+        **Main Features**
         
-        - ✅ 契約書AI分析
-        - ✅ 米国EAR判断フロー
-        - ✅ ECCN番号検索
-        - ✅ カントリーチャート分析
-        - ✅ リスク評価
-        - ✅ RAG許可例外判定
+        - ✅ AI Contract Analysis
+        - ✅ US EAR Decision Flow
+        - ✅ ECCN Search
+        - ✅ Country Chart Analysis
+        - ✅ Risk Assessment
+        - ✅ RAG License Exception
         
-        **データベース**
-        - ECCN番号: 141項目
-        - カントリーリスト: 33カ国
-        - 許可例外情報: RAG対応
+        **Database**
+        - ECCN Numbers: 141 items
+        - Country List: 33 countries
+        - License Exception Info: RAG-enabled
         """)
         
-        st.markdown("### ⚠️ 免責事項")
+        st.markdown("### ⚠️ Disclaimer")
         st.warning("""
-        本システムは参考情報を提供するツールです。
+        This system provides reference information only.
         
-        法的判断が必要な場合は専門家にご相談ください。
+        Consult with experts for legal decisions.
         """)
         
         # Version info
@@ -1242,39 +1242,39 @@ def main():
         st.caption("© 2025 Export Control AI")
     
     # Main content
-    tab1, tab2, tab3 = st.tabs(["📄 契約書分析", "💬 チャット相談", "📊 データ管理"])
+    tab1, tab2, tab3 = st.tabs(["📄 Contract Analysis", "💬 Chat Consultation", "📊 Data Management"])
     
     with tab1:
-        st.markdown('<div class="section-header">契約書アップロード</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Contract Upload</div>', unsafe_allow_html=True)
         
         uploaded_file = st.file_uploader(
-            "輸出契約書PDF、またはテキスト情報を入力してください",
+            "Upload export contract PDF or enter text information",
             type=['pdf', 'txt'],
-            help="契約書をアップロードすると、AIが自動的に分析します"
+            help="AI will automatically analyze when you upload a contract"
         )
         
         # Manual input option
-        with st.expander("📝 または、契約情報を手動で入力"):
+        with st.expander("📝 Or Enter Contract Information Manually"):
             col1, col2 = st.columns(2)
             with col1:
-                product_name = st.text_input("品目名")
-                destination = st.text_input("仕向地（輸出先国）")
-                end_user = st.text_input("需要者（エンドユーザー）")
+                product_name = st.text_input("Product Name")
+                destination = st.text_input("Destination Country")
+                end_user = st.text_input("End User")
             with col2:
-                purpose = st.text_area("用途")
-                amount = st.text_input("契約金額")
-                delivery_date = st.date_input("納期")
+                purpose = st.text_area("End Use")
+                amount = st.text_input("Contract Value")
+                delivery_date = st.date_input("Delivery Date")
             
             manual_text = f"""
-品目名: {product_name}
-仕向地: {destination}
+Product Name: {product_name}
+Destination: {destination}
 需要者: {end_user}
-用途: {purpose}
-契約金額: {amount}
-納期: {delivery_date}
+End Use: {purpose}
+Contract Value: {amount}
+Delivery Date: {delivery_date}
 """
         
-        if st.button("🔍 分析開始", type="primary"):
+        if st.button("🔍 Start Analysis", type="primary"):
             knowledge_base = load_knowledge_base()
             
             if uploaded_file is not None:
@@ -1293,17 +1293,17 @@ def main():
                 # 追加情報の収集
                 additional_context = ""
                 
-                # 仕向地チェック
-                if st.session_state.extracted_info['仕向地']:
-                    destination = st.session_state.extracted_info['仕向地']
+                # Destinationチェック
+                if st.session_state.extracted_info['Destination']:
+                    destination = st.session_state.extracted_info['Destination']
                     is_group_a = check_group_a_country(destination, st.session_state.sample_data.get('countries'))
                     is_concern, concern_type = check_concern_country(destination, st.session_state.sample_data.get('countries'))
                     
-                    additional_context += f"\n\n【仕向地情報】\n"
-                    additional_context += f"- 仕向地: {destination}\n"
-                    additional_context += f"- グループA国: {'はい' if is_group_a else 'いいえ'}\n"
+                    additional_context += f"\n\n[Destination Information]\n"
+                    additional_context += f"- Destination: {destination}\n"
+                    additional_context += f"- Group A Country: {'Yes' if is_group_a else 'No'}\n"
                     if is_concern:
-                        additional_context += f"- ⚠️ 懸念国: {concern_type}\n"
+                        additional_context += f"- ⚠️ Country of Concern: {concern_type}\n"
                 
                 # 需要者チェック
                 if st.session_state.extracted_info['需要者']:
@@ -1311,19 +1311,19 @@ def main():
                     is_listed, entity_info = check_entity_list(end_user, st.session_state.sample_data.get('entities'))
                     
                     if is_listed:
-                        additional_context += f"\n【需要者情報】\n"
-                        additional_context += f"- ⚠️ エンティティリスト掲載企業の可能性あり\n"
-                        additional_context += f"- 掲載理由: {entity_info['掲載理由']}\n"
-                        additional_context += f"- 規制内容: {entity_info['規制内容']}\n"
+                        additional_context += f"\n[End User Information]\n"
+                        additional_context += f"- ⚠️ Possibly listed on Entity List\n"
+                        additional_context += f"- Listing Reason: {entity_info['掲載理由']}\n"
+                        additional_context += f"- Regulation: {entity_info['規制内容']}\n"
                 
                 # 段階的AI分析実行
-                st.markdown('<div class="section-header">📋 分析結果（段階的表示）</div>', unsafe_allow_html=True)
+                st.markdown('<div class="section-header">📋 Analysis Results (Progressive Display)</div>', unsafe_allow_html=True)
                 result_container = st.container()
                 
                 analysis = analyze_contract_step_by_step(contract_text + additional_context, knowledge_base, result_container)
                 st.session_state.analysis_result = analysis
             else:
-                st.error("契約情報が入力されていません")
+                st.error("No contract information provided")
         
         # Display analysis results and download options
         if st.session_state.analysis_result:
@@ -1333,7 +1333,7 @@ def main():
             col1, col2 = st.columns(2)
             with col1:
                 st.download_button(
-                    label="📥 分析結果をダウンロード（テキスト）",
+                    label="📥 Download Analysis (Text)",
                     data=st.session_state.analysis_result,
                     file_name=f"export_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
                     mime="text/plain"
@@ -1341,23 +1341,23 @@ def main():
             with col2:
                 # 詳細レポートの生成
                 risk_level = assess_risk_level(st.session_state.analysis_result)
-                full_report = f"""安全保障貿易管理 分析レポート
-生成日時: {datetime.now().strftime('%Y年%m月%d日 %H:%M:%S')}
+                full_report = f"""Export Control Analysis Report
+Generated: {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}
 
-【リスクレベル】
+[Risk Level]
 {risk_level}
 
-【抽出された契約情報】
+[Extracted Contract Information]
 """
                 if st.session_state.extracted_info:
                     for key, value in st.session_state.extracted_info.items():
                         full_report += f"{key}: {value}\n"
                 
-                full_report += f"\n【AI分析結果】\n{st.session_state.analysis_result}\n\n"
-                full_report += "\n【免責事項】\n本分析結果は参考情報であり、法的助言ではありません。最終判断は必ず専門家や関係当局にご相談ください。"
+                full_report += f"\n[AI Analysis Results]\n{st.session_state.analysis_result}\n\n"
+                full_report += "\n[Disclaimer]\nThis analysis is for reference only and not legal advice. Consult with experts or authorities for final decisions."
                 
                 st.download_button(
-                    label="📥 詳細レポートをダウンロード",
+                    label="📥 Download Detailed Report",
                     data=full_report,
                     file_name=f"export_analysis_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
                     mime="text/plain"
@@ -1365,18 +1365,18 @@ def main():
     
     with tab2:
         st.markdown('<div class="section-header">💬 米国EAR再輸出規制 チャット相談</div>', unsafe_allow_html=True)
-        st.info("🇺🇸 米国から輸入した品目を日本から他国へ再輸出する際の米国EAR規制を分析します。品目名と仕向地を入力してください。")
+        st.info("🇺🇸 米国から輸入したProductを日本から他国へ再輸出する際の米国EAR規制を分析します。Product NameとDestinationを入力してください。")
         
         # Enhanced Chat interface with structured input
         col1, col2 = st.columns(2)
         with col1:
-            product_input = st.text_input("品目名（例：半導体製造装置、暗号化ソフトウェア）", key="chat_product")
+            product_input = st.text_input("Product Name（e.g., semiconductor equipment、encryption software）", key="chat_product")
         with col2:
-            destination_input = st.text_input("仕向地（例：中国、ロシア）", key="chat_destination")
+            destination_input = st.text_input("Destination (e.g., China, Russia)", key="chat_destination")
         
-        additional_info = st.text_area("追加情報・質問（オプション）", key="chat_additional", height=100)
+        additional_info = st.text_area("Additional Information/Questions (Optional)", key="chat_additional", height=100)
         
-        if st.button("🔍 分析開始（RAG許可例外判定含む）", key="chat_submit", type="primary"):
+        if st.button("🔍 Start Analysis（RAG許可例外判定含む）", key="chat_submit", type="primary"):
             if product_input:
                 # データ準備
                 eccn_json = st.session_state.sample_data.get('eccn_json')
@@ -1385,24 +1385,24 @@ def main():
                 # ECCN番号データをテキスト化（完全版）
                 eccn_context = ""
                 if eccn_json:
-                    eccn_context = "【ECCN番号データベース（完全版）】\n"
+                    eccn_context = "[ECCN Number Database (Complete)]\n"
                     for category in eccn_json.get('ccl_categories', []):
                         eccn_context += f"\n## Category {category.get('category_number', '')}: {category.get('title', '')}\n"
                         for group in category.get('product_groups', []):
                             eccn_context += f"\n### {group.get('group_title', '')}\n"
-                            for item in group.get('items', [])[:10]:  # 各グループから最大10項目
+                            for item in group.get('items', [])[:10]:  # Max 10 items from each group
                                 eccn_context += f"- **{item.get('eccn', '')}**: {item.get('description', '')[:200]}...\n"
                 
                 # カントリーチャートデータをテキスト化（完全版）
                 chart_context = ""
                 if country_chart is not None and not country_chart.empty:
-                    chart_context = "\n【カントリーチャート（完全版）】\n"
-                    chart_context += "以下は米国EARカントリーチャートの実データです。\'X\'は許可が必要であることを示します。\n\n"
+                    chart_context = "\n[Country Chart (Complete)]\n"
+                    chart_context += "Below is actual US EAR Country Chart data.\'X\'は許可が必要であることを示します。\n\n"
                     # 主要国を含める（トークン制限を考慮）
                     for idx, row in country_chart.head(50).iterrows():
                         country_name = row.iloc[0]
                         chart_context += f"\n**{country_name}**:\n"
-                        # 主要な規制理由カラムのみ表示
+                        # Show only key regulation reason columns
                         key_columns = ['NS 1', 'NS 2', 'MT 1', 'NP 1', 'NP 2', 'CB 1', 'CB 2', 'AT 1', 'AT 2']
                         for col in key_columns:
                             if col in row.index and pd.notna(row[col]):
@@ -1412,7 +1412,7 @@ def main():
                 knowledge_base = load_knowledge_base()
                 
                 # 段階的分析を表示
-                st.markdown('<div class="section-header">📋 分析結果（段階的表示）</div>', unsafe_allow_html=True)
+                st.markdown('<div class="section-header">📋 Analysis Results (Progressive Display)</div>', unsafe_allow_html=True)
                 result_container = st.container()
                 
                 # 段階的分析実行
@@ -1427,9 +1427,9 @@ def main():
                 )
                 
                 # ステップ5: RAG許可例外判定
-                with st.spinner("🎯 ステップ5: RAG許可例外を分析中..."):
+                with st.spinner("🎯 Step 5: Analyzing RAG License Exceptions..."):
                     with result_container:
-                        st.markdown("### 🎯 ステップ5: 許可例外（License Exceptions）判定【RAG分析】")
+                        st.markdown("### 🎯 Step 5: License Exceptions Determination [RAG Analysis]")
                         
                         try:
                             # RAG分析実行
@@ -1442,16 +1442,16 @@ def main():
                             )
                             
                             if success:
-                                # RAG分析結果を表示
+                                # RAGAnalysis Resultsを表示
                                 rag = LicenseExceptionRAG()
                                 rag.display_license_exception_analysis(rag_result)
                             else:
-                                st.warning(f"⚠️ RAG分析でエラーが発生しました: {rag_result.get('error', '不明')}")
-                                st.info("💡 Pinecone接続を確認してください。PINECONE_API_KEYが.envファイルに設定されているか確認してください。")
+                                st.warning(f"⚠️ Error occurred in RAG analysis: {rag_result.get('error', '不明')}")
+                                st.info("💡 Check Pinecone connection. Verify PINECONE_API_KEY is set in .env file.")
                         
                         except Exception as e:
-                            st.error(f"❌ RAGシステムエラー: {str(e)}")
-                            st.info("**RAGシステムの設定**: `.env`ファイルにPINCONE_API_KEYを追加してください。")
+                            st.error(f"❌ RAG System Error: {str(e)}")
+                            st.info("**RAG System Setup**: Add PINECONE_API_KEY to .env file.")
                         
                         st.markdown("---")
                 
@@ -1459,15 +1459,15 @@ def main():
                 st.session_state.chat_history.append({
                     "product": product_input,
                     "destination": destination_input,
-                    "question": additional_info if additional_info else "ECCN番号判定・カントリーチャート分析",
-                    "answer": analysis if analysis else "分析完了",
+                    "question": additional_info if additional_info else "ECCN Determination & Country Chart Analysis",
+                    "answer": analysis if analysis else "Analysis Complete",
                     "timestamp": datetime.now()
                 })
                 
                 # カントリーチャート詳細表示
                 if destination_input and country_chart is not None and not country_chart.empty:
                     with result_container:
-                        st.markdown("### 📊 カントリーチャート詳細")
+                        st.markdown("### 📊 Country Chart Details")
                         
                         # 国名で検索（部分一致）
                         matching_countries = country_chart[
@@ -1477,60 +1477,60 @@ def main():
                         if not matching_countries.empty:
                             st.dataframe(matching_countries, use_container_width=True)
                         else:
-                            st.warning(f"⚠️ カントリーチャートに「{destination_input}」の情報が見つかりませんでした。")
+                            st.warning(f"⚠️ '{destination_input}' not found in Country Chart.")
             else:
-                st.warning("品目名を入力してください。")
+                st.warning("Please enter Product Name.")
         
         # Display chat history
         if st.session_state.chat_history:
             st.markdown("---")
-            st.markdown("### 💬 分析履歴")
+            st.markdown("### 💬 Analysis History")
             for i, chat in enumerate(reversed(st.session_state.chat_history)):
                 timestamp_str = chat['timestamp'].strftime('%Y-%m-%d %H:%M')
                 product = chat.get('product', chat.get('question', ''))[:30]
                 
                 with st.expander(f"🔍 {product}... ({timestamp_str})"):
                     if 'product' in chat:
-                        st.markdown(f"**品目**: {chat['product']}")
+                        st.markdown(f"**Product**: {chat['product']}")
                         if chat.get('destination'):
-                            st.markdown(f"**仕向地**: {chat['destination']}")
-                    st.markdown(f"**質問**: {chat['question']}")
+                            st.markdown(f"**Destination**: {chat['destination']}")
+                    st.markdown(f"**Question**: {chat['question']}")
                     st.markdown("---")
-                    st.markdown(f"**分析結果**:\n\n{chat['answer']}")
+                    st.markdown(f"**Analysis Results**:\n\n{chat['answer']}")
     
     with tab3:
-        st.markdown('<div class="section-header">📊 規制データ可視化 & 管理</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">📊 Regulation Data Visualization & Management</div>', unsafe_allow_html=True)
         
-        st.info("🎨 インタラクティブな可視化でデータを直感的に理解できます")
+        st.info("🎨 Intuitive data visualization with interactive charts")
         
         # タブで可視化とデータ管理を分離
         viz_tab1, viz_tab2 = st.tabs([
-            "🗺️ 世界規制マップ",
-            "🔢 ECCN検索"
+            "🗺️ World Regulation Map",
+            "🔢 ECCN Search"
         ])
         
         with viz_tab1:
             st.markdown("### 🗺️ ECCN番号別 世界規制マップ")
-            st.markdown("特定のECCN番号に対して、どの国が規制対象かを地図上で可視化します")
+            st.markdown("Visualize which countries require export licenses for specific ECCN numbers")
             
             col1, col2 = st.columns([2, 1])
             with col1:
                 eccn_for_map = st.text_input(
-                    "ECCN番号を入力",
+                    "Enter ECCN Number",
                     value="3B001",
                     key="map_eccn",
-                    help="例: 3B001, 5A002, 4A003"
+                    help="e.g., 3B001, 5A002, 4A003"
                 )
             with col2:
                 regulation_reason = st.selectbox(
-                    "規制理由を選択",
+                    "Select Regulation Reason",
                     ["NS 1", "NS 2", "MT 1", "NP 1", "NP 2", "CB 1", "CB 2", "AT 1", "AT 2"],
                     key="map_regulation"
                 )
             
-            if st.button("🗺️ 地図を生成", type="primary", key="generate_map"):
+            if st.button("🗺️ Generate Map", type="primary", key="generate_map"):
                 if st.session_state.sample_data.get('country_chart') is not None:
-                    with st.spinner("地図を生成中..."):
+                    with st.spinner("Generating map..."):
                         world_map = create_world_map_restrictions(
                             st.session_state.sample_data['country_chart'],
                             eccn_for_map,
@@ -1540,30 +1540,30 @@ def main():
                             st.plotly_chart(world_map, use_container_width=True)
                             
                             st.success(f"""
-                            ✅ **ECCN {eccn_for_map} - {regulation_reason}** の規制マップを表示しました
+                            ✅ **ECCN {eccn_for_map} - {regulation_reason}** regulation map displayed
                             
-                            - 🟢 **緑**: 許可不要（輸出可能）
-                            - 🔴 **赤**: 許可必要（BISへの申請が必要）
+                            - 🟢 **Green**: No License Required (Export Allowed)
+                            - 🔴 **Red**: License Required (BIS Application Needed)
                             """)
                         else:
-                            st.error("地図の生成に失敗しました")
+                            st.error("Failed to generate map")
                 else:
-                    st.warning("カントリーチャートデータが読み込まれていません")
+                    st.warning("Country Chart data not loaded")
         
         with viz_tab2:
-            st.markdown("### 🔢 ECCN番号データベース検索")
+            st.markdown("### 🔢 ECCN Number Database Search")
             
             # インタラクティブテーブル
             if 'eccn_json' in st.session_state.sample_data:
                 eccn_df = create_interactive_eccn_table(st.session_state.sample_data['eccn_json'])
                 
                 if eccn_df is not None and not eccn_df.empty:
-                    st.info(f"📚 合計 **{len(eccn_df)}** 項目のECCN番号が登録されています")
+                    st.info(f"📚 Total of **{len(eccn_df)}** ECCN items registered")
                     
                     # 検索機能
                     search_keyword = st.text_input(
-                        "🔍 キーワードで検索",
-                        placeholder="例: semiconductor, encryption, 5A002",
+                        "🔍 Search by Keyword",
+                        placeholder="e.g., semiconductor, encryption, 5A002",
                         key="eccn_search"
                     )
                     
@@ -1571,16 +1571,16 @@ def main():
                         filtered_df = eccn_df[
                             eccn_df.apply(lambda row: row.astype(str).str.contains(search_keyword, case=False).any(), axis=1)
                         ]
-                        st.success(f"✅ {len(filtered_df)}件の一致が見つかりました")
+                        st.success(f"✅ {len(filtered_df)} matches found")
                         st.dataframe(filtered_df, use_container_width=True, height=500)
                     else:
                         st.dataframe(eccn_df, use_container_width=True, height=500)
                     
                     # クリックで詳細表示（選択機能）
                     st.markdown("---")
-                    st.markdown("#### 📋 ECCN詳細表示")
+                    st.markdown("#### 📋 ECCN Details")
                     selected_eccn = st.selectbox(
-                        "ECCN番号を選択して詳細を表示",
+                        "Select ECCN number to view details",
                         options=eccn_df['ECCN番号'].unique(),
                         key="selected_eccn_detail"
                     )
@@ -1599,7 +1599,7 @@ def main():
                         </div>
                         """, unsafe_allow_html=True)
             else:
-                st.warning("ECCNデータが読み込まれていません")
+                st.warning("ECCN data not loaded")
 
 if __name__ == "__main__":
     main()
