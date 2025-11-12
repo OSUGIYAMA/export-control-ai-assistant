@@ -50,257 +50,429 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS - Clean White Flat Design (Light Mode)
+# Enhanced Modern UI Design with Gradients and Animations
 st.markdown("""
 <style>
-    /* Force Light Mode - White Background, Black Text */
-    .stApp {
-        background-color: #ffffff !important;
-        color: #000000 !important;
+/* Enhanced Modern UI Design with Gradients and Animations */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Global Styles - Modern Typography */
+.stApp {
+    background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%) !important;
+    color: #1a202c !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+body, p, span, div, h1, h2, h3, h4, h5, h6, label {
+    color: #1a202c !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Main Header - Modern Gradient Design */
+.main-header {
+    font-size: 3rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding: 2rem 0;
+    position: relative;
+    letter-spacing: -0.02em;
+    animation: fadeInDown 0.6s ease-out;
+}
+
+.main-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 2px;
+}
+
+/* Section Headers - Modern with Icon Support */
+.section-header {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #2d3748 !important;
+    margin-top: 2.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-left: 5px solid #667eea;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.section-header:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+/* Alert Boxes - Modern Cards with Shadows */
+.warning-box {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border-left: 5px solid #f59e0b;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    color: #78350f !important;
+    box-shadow: 0 4px 6px rgba(245, 158, 11, 0.1);
+    animation: slideInLeft 0.4s ease-out;
+}
+
+.info-box {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-left: 5px solid #3b82f6;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    color: #1e3a8a !important;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);
+    animation: slideInLeft 0.4s ease-out;
+}
+
+.success-box {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border-left: 5px solid #10b981;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    color: #064e3b !important;
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.1);
+    animation: slideInLeft 0.4s ease-out;
+}
+
+.danger-box {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border-left: 5px solid #ef4444;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    color: #7f1d1d !important;
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.1);
+    animation: slideInLeft 0.4s ease-out;
+}
+
+/* Buttons - Modern Gradient with Hover Effects */
+.stButton>button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.025em;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.stButton>button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.stButton>button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(102, 126, 234, 0.4);
+}
+
+.stButton>button:hover::before {
+    left: 100%;
+}
+
+.stButton>button:active {
+    transform: translateY(0);
+}
+
+/* Input Fields - Modern with Focus Effects */
+.stTextInput>div>div>input,
+.stTextArea>div>div>textarea,
+.stSelectbox>div>div>div {
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    background-color: #ffffff;
+    font-size: 0.95rem;
+}
+
+.stTextInput>div>div>input:focus,
+.stTextArea>div>div>textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+    transform: translateY(-1px);
+}
+
+/* Expander - Modern Card Design */
+.streamlit-expanderHeader {
+    background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.streamlit-expanderHeader:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+/* Dataframe - Modern Table */
+.stDataFrame {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Tabs - Modern Pills Design */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    background-color: transparent;
+    border-bottom: none;
+    padding: 0.5rem;
+}
+
+.stTabs [data-baseweb="tab"] {
+    background-color: #f7fafc;
+    border-radius: 10px;
+    padding: 0.875rem 1.75rem;
+    font-weight: 600;
+    color: #64748b;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    background-color: #e2e8f0;
+    color: #475569;
+}
+
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Sidebar - Modern with Gradient */
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border-right: 2px solid #e2e8f0;
+}
+
+[data-testid="stSidebar"] * {
+    color: #1a202c !important;
+}
+
+[data-testid="stSidebar"] .stMarkdown h2 {
+    color: #667eea !important;
+    font-weight: 700;
+}
+
+/* Metrics - Modern Cards with Gradients */
+[data-testid="stMetricValue"] {
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+[data-testid="stMetricLabel"] {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #64748b !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+[data-testid="stMetric"] {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+[data-testid="stMetric"]:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    border-color: #667eea;
+}
+
+/* File Uploader - Modern Dashed Card */
+[data-testid="stFileUploader"] {
+    background: linear-gradient(135deg, #fafbfc 0%, #f3f4f6 100%);
+    border: 3px dashed #cbd5e0;
+    border-radius: 12px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+}
+
+[data-testid="stFileUploader"]:hover {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+}
+
+/* Success/Info/Warning Messages - Enhanced */
+.stSuccess {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border-left: 5px solid #10b981;
+    border-radius: 10px;
+    color: #064e3b !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+}
+
+.stInfo {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-left: 5px solid #3b82f6;
+    border-radius: 10px;
+    color: #1e3a8a !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.stWarning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-left: 5px solid #f59e0b;
+    border-radius: 10px;
+    color: #78350f !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+}
+
+/* Animations */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
     }
-    
-    /* Override all text to black */
-    body, p, span, div, h1, h2, h3, h4, h5, h6, label {
-        color: #000000 !important;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
-    
-    /* Main Header - Simple and Clean */
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #000000 !important;
-        text-align: center;
-        margin-bottom: 2rem;
-        padding: 1.5rem 0;
-        border-bottom: 3px solid #3182ce;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
     }
-    
-    /* Section Headers - Minimal Design */
-    .section-header {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #000000 !important;
-        margin-top: 2rem;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #e2e8f0;
+    to {
+        opacity: 1;
+        transform: translateX(0);
     }
-    
-    /* Force all Streamlit elements to black text */
-    .stMarkdown, .stMarkdown p, .stMarkdown span {
-        color: #000000 !important;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
     }
-    
-    .stText {
-        color: #000000 !important;
+    50% {
+        opacity: 0.8;
     }
-    
-    [data-testid="stMarkdownContainer"] {
-        color: #000000 !important;
-    }
-    
-    [data-testid="stMarkdownContainer"] p {
-        color: #000000 !important;
-    }
-    
-    /* Alert Boxes - Flat with Subtle Colors, BLACK TEXT */
-    .warning-box {
-        background-color: #fef5e7;
-        border-left: 4px solid #f39c12;
-        border-radius: 4px;
-        padding: 1rem;
-        margin: 1rem 0;
-        color: #000000 !important;
-    }
-    
-    .info-box {
-        background-color: #ebf8ff;
-        border-left: 4px solid #3182ce;
-        border-radius: 4px;
-        padding: 1rem;
-        margin: 1rem 0;
-        color: #000000 !important;
-    }
-    
-    .success-box {
-        background-color: #f0fdf4;
-        border-left: 4px solid #10b981;
-        border-radius: 4px;
-        padding: 1rem;
-        margin: 1rem 0;
-        color: #000000 !important;
-    }
-    
-    .danger-box {
-        background-color: #fef2f2;
-        border-left: 4px solid #ef4444;
-        border-radius: 4px;
-        padding: 1rem;
-        margin: 1rem 0;
-        color: #000000 !important;
-    }
-    
-    /* Buttons - Clean Blue */
-    .stButton>button {
-        background-color: #3182ce;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 0.625rem 1.5rem;
-        font-weight: 500;
-        transition: background-color 0.2s;
-    }
-    
-    .stButton>button:hover {
-        background-color: #2c5282;
-    }
-    
-    /* Input Fields - Clean Borders */
-    .stTextInput>div>div>input,
-    .stTextArea>div>div>textarea,
-    .stSelectbox>div>div>div {
-        border-radius: 6px;
-        border: 1px solid #cbd5e0;
-        padding: 0.5rem;
-    }
-    
-    .stTextInput>div>div>input:focus,
-    .stTextArea>div>div>textarea:focus {
-        border-color: #3182ce;
-        outline: none;
-    }
-    
-    /* Expander - Subtle Background */
-    .streamlit-expanderHeader {
-        background-color: #f7fafc;
-        border-radius: 6px;
-        border: 1px solid #e2e8f0;
-        font-weight: 500;
-    }
-    
-    /* Dataframe - Clean Table */
-    .stDataFrame {
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        overflow: hidden;
-    }
-    
-    /* Tabs - Simple and Clean */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 4px;
-        background-color: transparent;
-        border-bottom: 2px solid #e2e8f0;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        background-color: transparent;
-        border-radius: 6px 6px 0 0;
-        padding: 0.75rem 1.5rem;
-        font-weight: 500;
-        color: #4a5568;
-        border: none;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background-color: #3182ce;
-        color: white;
-    }
-    
-    /* Sidebar - Clean White/Gray with BLACK TEXT */
-    [data-testid="stSidebar"] {
-        background-color: #f7fafc !important;
-        border-right: 1px solid #e2e8f0;
-    }
-    
-    [data-testid="stSidebar"] * {
-        color: #000000 !important;
-    }
-    
-    /* Metrics - Clean Cards with BLACK TEXT */
-    [data-testid="stMetricValue"] {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #000000 !important;
-    }
-    
-    [data-testid="stMetricLabel"] {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #000000 !important;
-    }
-    
-    [data-testid="stMetricDelta"] {
-        color: #000000 !important;
-    }
-    
-    /* File Uploader - Clean Design */
-    [data-testid="stFileUploader"] {
-        background-color: #f7fafc;
-        border: 2px dashed #cbd5e0;
-        border-radius: 6px;
-        padding: 1rem;
-    }
-    
-    /* Success/Info/Warning Messages - BLACK TEXT */
-    .stSuccess {
-        background-color: #f0fdf4;
-        border-left: 4px solid #10b981;
-        color: #000000 !important;
-    }
-    
-    .stInfo {
-        background-color: #ebf8ff;
-        border-left: 4px solid #3182ce;
-        color: #000000 !important;
-    }
-    
-    .stWarning {
-        background-color: #fef5e7;
-        border-left: 4px solid #f39c12;
-        color: #000000 !important;
-    }
-    
-    /* Expander content - BLACK TEXT */
-    [data-testid="stExpander"] {
-        background-color: #ffffff !important;
-    }
-    
-    [data-testid="stExpander"] * {
-        color: #000000 !important;
-    }
-    
-    /* Tab content - BLACK TEXT */
-    .stTabs [data-baseweb="tab-panel"] {
-        background-color: #ffffff !important;
-    }
-    
-    .stTabs [data-baseweb="tab-panel"] * {
-        color: #000000 !important;
-    }
-    
-    /* Hide Streamlit branding */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    
-    /* Scrollbar - Clean Design */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: #cbd5e0;
-        border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: #a0aec0;
-    }
+}
+
+/* Hide Streamlit branding */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+
+/* Modern Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #653a8e 100%);
+}
+
+/* Download Button Enhancement */
+.stDownloadButton>button {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white !important;
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.25);
+}
+
+.stDownloadButton>button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(16, 185, 129, 0.4);
+}
+
+/* Enhanced spacing */
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    max-width: 1400px;
+}
+
+/* Status Cards */
+.status-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+}
+
+.status-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.status-card-value {
+    color: white;
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.status-card-label {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -445,23 +617,73 @@ def analyze_contract_with_gpt(contract_text, knowledge_base):
         return None
 
 def main():
-    # Header
-    st.markdown('<div class="main-header">🔒 Export Control AI Assistant</div>', unsafe_allow_html=True)
+    # Enhanced Header with Icon
+    st.markdown('''
+    <div class="main-header">
+        <span style="font-size: 3.5rem; margin-right: 1rem;">🌐</span>
+        Export Control AI Assistant
+    </div>
+    ''', unsafe_allow_html=True)
     
-    # データベース読み込み状態を表示（コンパクトに）
+    # Subtitle with description
+    st.markdown('''
+    <div style="text-align: center; margin-top: -1.5rem; margin-bottom: 2.5rem; color: #64748b; font-size: 1.1rem; font-weight: 500;">
+        米国EAR再輸出規制の判断を、AI技術でスマートにサポート
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    # Enhanced database status display with modern cards
     if 'eccn_json' in st.session_state.sample_data and st.session_state.sample_data['eccn_json']:
         eccn_count = sum(get_eccn_categories_summary(st.session_state.sample_data['eccn_json']).values())
-        col1, col2, col3 = st.columns(3)
+        
+        # Create a modern status bar
+        col1, col2, col3, col4 = st.columns(4)
+        
         with col1:
-            st.metric("ECCN Database", f"{eccn_count} items", delta="Active")
+            st.markdown(f'''
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                <div style="color: white; font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">{eccn_count}</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">ECCN Items</div>
+            </div>
+            ''', unsafe_allow_html=True)
+        
         with col2:
-            st.metric("Countries", "33", delta="Monitored")
+            st.markdown('''
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 1.5rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                <div style="color: white; font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">33+</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Countries</div>
+            </div>
+            ''', unsafe_allow_html=True)
+        
         with col3:
-            st.metric("Status", "Online", delta="Ready")
+            st.markdown('''
+            <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 1.5rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+                <div style="color: white; font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">✓</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">RAG Active</div>
+            </div>
+            ''', unsafe_allow_html=True)
+        
+        with col4:
+            st.markdown('''
+            <div style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); padding: 1.5rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);">
+                <div style="color: white; font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">🚀</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Online</div>
+            </div>
+            ''', unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
     
-    # Sidebar
+    # Sidebar with enhanced design
     with st.sidebar:
-        st.header("📚 システム情報")
+        st.markdown('''
+        <div style="text-align: center; padding: 1rem 0; margin-bottom: 1.5rem;">
+            <div style="font-size: 3rem; margin-bottom: 0.5rem;">🛡️</div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: #667eea;">Export Control</div>
+            <div style="font-size: 0.9rem; color: #64748b;">AI Assistant</div>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        st.markdown("### 📚 システム情報")
         st.info("""
         **主な機能**
         
@@ -470,18 +692,25 @@ def main():
         - ✅ 米国EAR判断フロー
         - ✅ ECCN番号検索
         - ✅ リスク評価
+        - ✅ RAG許可例外判定
         
         **データベース**
         - ECCN番号: 141項目
         - カントリーリスト: 33カ国
+        - 許可例外情報: RAG対応
         """)
         
-        st.header("⚠️ 免責事項")
+        st.markdown("### ⚠️ 免責事項")
         st.warning("""
         本システムは参考情報を提供するツールです。
         
         法的判断が必要な場合は専門家にご相談ください。
         """)
+        
+        # Version info
+        st.markdown("---")
+        st.caption("Version 2.0 - Enhanced UI")
+        st.caption("© 2025 Export Control AI")
     
     # Main content
     tab1, tab2, tab3 = st.tabs(["📄 契約書分析", "💬 チャット相談", "📊 データ管理"])
@@ -646,7 +875,7 @@ def main():
         
         additional_info = st.text_area("追加情報・質問（オプション）", key="chat_additional", height=100)
         
-            if st.button("🔍 分析開始（RAG許可例外判定含む）", key="chat_submit", type="primary"):
+        if st.button("🔍 分析開始（RAG許可例外判定含む）", key="chat_submit", type="primary"):
             if product_input:
                 with st.spinner("ECCN番号を判定し、カントリーチャートを分析中..."):
                     # データ準備

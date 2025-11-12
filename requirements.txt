@@ -12,5 +12,5 @@ chromadb==0.4.22
 plotly==5.18.0
 folium==0.15.1
 streamlit-folium==0.16.0
-pinecone-client==3.0.0
+pinecone
 

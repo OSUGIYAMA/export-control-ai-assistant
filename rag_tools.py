@@ -45,7 +45,8 @@ class LicenseExceptionRAG:
         """
         response = self.openai_client.embeddings.create(
             model="text-embedding-3-small",
-            input=query_text
+            input=query_text,
+            dimensions=1024  # Pineconeインデックスの次元数に合わせる
         )
         return response.data[0].embedding
     
@@ -80,11 +81,12 @@ class LicenseExceptionRAG:
         # Embedding生成
         query_embedding = self.create_query_embedding(query_text)
         
-        # Pineconeで検索
+        # Pineconeで検索（namespaceを指定）
         results = self.index.query(
             vector=query_embedding,
             top_k=top_k,
-            include_metadata=True
+            include_metadata=True,
+            namespace="license_exceptions"  # namespace指定
         )
         
         return results.matches
