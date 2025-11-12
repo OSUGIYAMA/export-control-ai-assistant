@@ -548,6 +548,34 @@ def load_knowledge_base():
 def analyze_contract_with_gpt(contract_text, knowledge_base):
     """GPTで契約書を分析（米国EAR再輸出規制のみ）"""
     
+    # ECCN番号データベースを準備
+    eccn_json = st.session_state.sample_data.get('eccn_json')
+    eccn_data_text = ""
+    if eccn_json and 'ccl_categories' in eccn_json:
+        eccn_data_text = "\n【ECCN番号データベース（完全版）】\n"
+        for category in eccn_json['ccl_categories']:
+            eccn_data_text += f"\n## Category {category.get('category_number', '')}: {category.get('title', '')}\n"
+            for group in category.get('product_groups', []):
+                eccn_data_text += f"\n### {group.get('group_title', '')}\n"
+                for item in group.get('items', [])[:10]:  # 各グループから最大10項目
+                    eccn_data_text += f"- **{item.get('eccn', '')}**: {item.get('description', '')[:200]}...\n"
+    
+    # カントリーチャートデータを準備
+    country_chart = st.session_state.sample_data.get('country_chart')
+    country_chart_text = ""
+    if country_chart is not None and not country_chart.empty:
+        country_chart_text = "\n【カントリーチャート（完全版）】\n"
+        country_chart_text += "以下は米国EARカントリーチャートの実データです。\'X\'は許可が必要であることを示します。\n\n"
+        # 最初の30カ国程度を含める（トークン制限を考慮）
+        for idx, row in country_chart.head(30).iterrows():
+            country_name = row.iloc[0]
+            country_chart_text += f"\n**{country_name}**:\n"
+            # 主要な規制理由カラムのみ表示
+            key_columns = ['NS 1', 'NS 2', 'MT 1', 'NP 1', 'NP 2', 'CB 1', 'AT 1']
+            for col in key_columns:
+                if col in row.index and pd.notna(row[col]):
+                    country_chart_text += f"  - {col}: {row[col]}\n"
+    
     prompt = f"""
 あなたは米国EAR再輸出規制の専門家です。以下の契約書を分析し、米国EAR規制について判断してください。
 
@@ -558,8 +586,12 @@ def analyze_contract_with_gpt(contract_text, knowledge_base):
 【契約書内容】
 {contract_text[:5000]}  # トークン制限のため最初の5000文字
 
-【ナレッジベース】
-{knowledge_base}
+{eccn_data_text[:3000]}
+
+{country_chart_text[:3000]}
+
+【ナレッジベース（参考）】
+{knowledge_base[:1000]}
 
 以下の項目について詳細に分析してください：
 
@@ -574,28 +606,40 @@ def analyze_contract_with_gpt(contract_text, knowledge_base):
 ## 2. 米国EAR再輸出判断フロー分析
 
 ### A. EAR対象品目の再輸出に該当するか
-米国原産品・組込品・外国直接製品の可能性
+米国原産品・組込品・外国直接製品の可能性を評価
 
-### B. ECCN番号
-推定されるECCN番号
+### B. ECCN番号の判定
+上記のECCN番号データベースを参照し、最も適切なECCN番号を判定してください。
+- 推定ECCN番号（5桁の番号、例：3A001、5A002、またはEAR99）
+- カテゴリー（1桁目の意味）
+- グループ（2桁目の意味）
+- 規制理由（3桁目：NS=国家安全保障、MT=ミサイル技術、NP=核不拡散、等）
+- 選定理由（なぜこのECCN番号を選んだか詳細に説明）
 
-### C. カントリーチャート
-仕向国に対する規制の有無
+### C. カントリーチャート分析
+上記のカントリーチャートデータを参照し、仕向国に対する規制を判定してください。
+- 仕向国名
+- 該当する規制理由（NS 1, NS 2, MT 1, NP 1, 等）
+- 各規制理由での許可要否（\'X\'マークがあれば許可必要）
+- 総合判定（許可必要 or 許可例外が適用可能 or 許可不要）
 
-### D. 許可例外
-適用可能な例外
+### D. 許可例外の検討
+適用可能な許可例外（LVS, GBS, TSR, TMP, ENC等）を検討
 
 ### E. 禁輸国・リスト規制
-該当する懸念の有無
+- DPL（Denied Persons List）該当チェック
+- Entity List該当チェック
+- 禁輸国（北朝鮮、イラン、シリア、キューバ、クリミア）該当チェック
 
-## 4. 総合判定とリスク評価
-- 外為法：許可必要/不要
-- 米国EAR：許可必要/不要
-- リスクレベル：高/中/低
-- 推奨アクション
+## 3. 総合判定とリスク評価
+- **米国EAR判定**: 許可必要 / 許可例外適用可能 / 許可不要
+- **リスクレベル**: 高 / 中 / 低
+- **推奨アクション**: 具体的な次のステップ
 
-## 5. 必要な手続き
-具体的な申請手順と窓口
+## 4. 必要な手続き
+BISへの許可申請が必要な場合の具体的な手順と窓口
+
+**重要**: 外為法については言及しないでください。このシステムは米国EAR規制のみを扱います。
 
 明確で構造化された形式で回答してください。
 """
@@ -688,9 +732,9 @@ def main():
         **主な機能**
         
         - ✅ 契約書AI分析
-        - ✅ 外為法判断フロー
         - ✅ 米国EAR判断フロー
         - ✅ ECCN番号検索
+        - ✅ カントリーチャート分析
         - ✅ リスク評価
         - ✅ RAG許可例外判定
         
@@ -882,20 +926,31 @@ def main():
                     eccn_json = st.session_state.sample_data.get('eccn_json')
                     country_chart = st.session_state.sample_data.get('country_chart')
                     
-                    # ECCN番号データをテキスト化
+                    # ECCN番号データをテキスト化（完全版）
                     eccn_context = ""
                     if eccn_json:
-                        eccn_context = "【利用可能なECCN番号データベース】\n"
-                        for category in eccn_json.get('ccl_categories', [])[:5]:  # 最初の5カテゴリー
-                            eccn_context += f"\nCategory {category.get('category_number', '')}: {category.get('title', '')}\n"
+                        eccn_context = "【ECCN番号データベース（完全版）】\n"
+                        for category in eccn_json.get('ccl_categories', []):
+                            eccn_context += f"\n## Category {category.get('category_number', '')}: {category.get('title', '')}\n"
                             for group in category.get('product_groups', []):
-                                for item in group.get('items', [])[:3]:  # 各グループの最初の3項目
-                                    eccn_context += f"  - {item.get('eccn', '')}: {item.get('description', '')[:100]}...\n"
+                                eccn_context += f"\n### {group.get('group_title', '')}\n"
+                                for item in group.get('items', [])[:10]:  # 各グループから最大10項目
+                                    eccn_context += f"- **{item.get('eccn', '')}**: {item.get('description', '')[:200]}...\n"
                     
-                    # カントリーチャートデータをテキスト化
+                    # カントリーチャートデータをテキスト化（完全版）
                     chart_context = ""
                     if country_chart is not None and not country_chart.empty:
-                        chart_context = f"\n【カントリーチャート情報】\n利用可能な国数: {len(country_chart)}カ国\n"
+                        chart_context = "\n【カントリーチャート（完全版）】\n"
+                        chart_context += "以下は米国EARカントリーチャートの実データです。\'X\'は許可が必要であることを示します。\n\n"
+                        # 主要国を含める（トークン制限を考慮）
+                        for idx, row in country_chart.head(50).iterrows():
+                            country_name = row.iloc[0]
+                            chart_context += f"\n**{country_name}**:\n"
+                            # 主要な規制理由カラムのみ表示
+                            key_columns = ['NS 1', 'NS 2', 'MT 1', 'NP 1', 'NP 2', 'CB 1', 'CB 2', 'AT 1', 'AT 2']
+                            for col in key_columns:
+                                if col in row.index and pd.notna(row[col]):
+                                    chart_context += f"  - {col}: {row[col]}\n"
                     
                     # General Prohibitionsの情報を追加
                     knowledge_base = load_knowledge_base()
