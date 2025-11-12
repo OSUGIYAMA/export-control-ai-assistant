@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Import custom modules
-from knowledge_base import get_full_knowledge_base, get_gaiame_knowledge, get_ear_knowledge
+from knowledge_base import get_full_knowledge_base, get_ear_knowledge
 from utils import (
     extract_contract_info,
     check_group_a_country,
