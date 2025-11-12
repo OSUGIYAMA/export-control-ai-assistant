@@ -11,52 +11,52 @@ import pandas as pd
 
 def extract_contract_info(text: str) -> Dict[str, str]:
     """
-    契約書テキストから主要情報を抽出
+    Extract key information from contract text
     
     Args:
-        text: 契約書のテキスト
+        text: Contract text
         
     Returns:
-        抽出された情報の辞書
+        Dictionary of extracted information
     """
     info = {
-        "品目名": "",
-        "仕向地": "",
-        "需要者": "",
-        "用途": "",
-        "契約金額": "",
-        "納期": ""
+        "Product Name": "",
+        "Destination": "",
+        "End User": "",
+        "End Use": "",
+        "Contract Value": "",
+        "Delivery Date": ""
     }
     
-    # 品目名の抽出（例：「品目」「製品」「商品」等のキーワード後の文字列）
-    product_pattern = r'(?:品目|製品|商品|貨物)[\s：:]*([^\n]+)'
+    # Extract product name (keywords: 品目, 製品, 商品, product, item, etc.)
+    product_pattern = r'(?:品目|製品|商品|貨物|Product|Item|Goods)[\s：:]*([^\n]+)'
     product_match = re.search(product_pattern, text, re.IGNORECASE)
     if product_match:
-        info["品目名"] = product_match.group(1).strip()
+        info["Product Name"] = product_match.group(1).strip()
     
-    # 仕向地の抽出
-    destination_pattern = r'(?:仕向地|輸出先|輸出国|出荷先国)[\s：:]*([^\n]+)'
+    # Extract destination
+    destination_pattern = r'(?:仕向地|輸出先|輸出国|出荷先国|Destination|Export to|Ship to)[\s：:]*([^\n]+)'
     dest_match = re.search(destination_pattern, text, re.IGNORECASE)
     if dest_match:
-        info["仕向地"] = dest_match.group(1).strip()
+        info["Destination"] = dest_match.group(1).strip()
     
-    # 需要者の抽出
-    end_user_pattern = r'(?:需要者|エンドユーザー|最終需要者|顧客)[\s：:]*([^\n]+)'
+    # Extract end user
+    end_user_pattern = r'(?:需要者|エンドユーザー|最終需要者|顧客|End User|Customer)[\s：:]*([^\n]+)'
     user_match = re.search(end_user_pattern, text, re.IGNORECASE)
     if user_match:
-        info["需要者"] = user_match.group(1).strip()
+        info["End User"] = user_match.group(1).strip()
     
-    # 用途の抽出
-    purpose_pattern = r'(?:用途|使用目的|利用目的)[\s：:]*([^\n]+)'
+    # Extract end use/purpose
+    purpose_pattern = r'(?:用途|使用目的|利用目的|End Use|Purpose|Application)[\s：:]*([^\n]+)'
     purpose_match = re.search(purpose_pattern, text, re.IGNORECASE)
     if purpose_match:
-        info["用途"] = purpose_match.group(1).strip()
+        info["End Use"] = purpose_match.group(1).strip()
     
-    # 契約金額の抽出
-    amount_pattern = r'(?:契約金額|金額|価格|総額)[\s：:]*([^\n]+)'
+    # Extract contract value
+    amount_pattern = r'(?:契約金額|金額|価格|総額|Contract Value|Amount|Price|Total)[\s：:]*([^\n]+)'
     amount_match = re.search(amount_pattern, text, re.IGNORECASE)
     if amount_match:
-        info["契約金額"] = amount_match.group(1).strip()
+        info["Contract Value"] = amount_match.group(1).strip()
     
     return info
 
@@ -301,14 +301,14 @@ def get_eccn_categories_summary(eccn_json: Dict) -> Dict[str, int]:
 
 def check_entity_list(company_name: str, df: Optional[pd.DataFrame] = None) -> Tuple[bool, Optional[Dict]]:
     """
-    企業がエンティティリストに掲載されているか確認
+    Check if a company is listed on the Entity List
     
     Args:
-        company_name: 企業名
-        df: エンティティリストのDataFrame（オプション）
+        company_name: Company name
+        df: Entity List DataFrame (optional)
         
     Returns:
-        (掲載されている場合True, 掲載情報の辞書)
+        (True if listed, dictionary of listing information)
     """
     if df is None:
         return False, None
@@ -320,11 +320,11 @@ def check_entity_list(company_name: str, df: Optional[pd.DataFrame] = None) -> T
     
     row = matching_rows.iloc[0]
     info = {
-        "企業・機関名": row['企業・機関名'],
-        "国": row['国'],
-        "掲載理由": row['掲載理由'],
-        "規制内容": row['規制内容'],
-        "掲載日": row['掲載日']
+        "Company Name": row['企業・機関名'],
+        "Country": row['国'],
+        "Listing Reason": row['掲載理由'],
+        "Regulation": row['規制内容'],
+        "Listing Date": row['掲載日']
     }
     
     return True, info

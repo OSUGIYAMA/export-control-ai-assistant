@@ -478,32 +478,32 @@ header {visibility: hidden;}
 
 # Define functions before session state initialization
 def load_sample_data():
-    """サンプルデータを読み込む"""
+    """Load sample data"""
     sample_data_dir = Path("sample_data")
     data = {}
     
-    # ECCN リスト（CSV）
+    # ECCN List (CSV)
     eccn_path = sample_data_dir / "eccn_list.csv"
     if eccn_path.exists():
         data['eccn_csv'] = pd.read_csv(eccn_path)
     
-    # ECCN リスト（JSON）- より詳細なデータ
+    # ECCN List (JSON) - more detailed data
     eccn_json_path = Path("eccnnumber.json")
     if eccn_json_path.exists():
         data['eccn_json'] = load_eccn_json(str(eccn_json_path))
-        # 読み込み成功時のメッセージは後で表示
+        # Display success message later
     
-    # カントリーチャート（米国EAR）
+    # Country Chart (US EAR)
     country_chart_path = Path("11_12_2025_country_chart_export.csv")
     if country_chart_path.exists():
         data['country_chart'] = pd.read_csv(country_chart_path)
     
-    # カントリーグループ
+    # Country Groups
     country_path = sample_data_dir / "country_groups.csv"
     if country_path.exists():
         data['countries'] = pd.read_csv(country_path)
     
-    # エンティティリスト
+    # Entity List
     entity_path = sample_data_dir / "entity_list_sample.csv"
     if entity_path.exists():
         data['entities'] = pd.read_csv(entity_path)
@@ -521,9 +521,9 @@ if 'sample_data' not in st.session_state:
     st.session_state.sample_data = load_sample_data()
 
 def extract_text_from_pdf(pdf_file):
-    """PDFからテキストを抽出（pdfplumberを使用して精度向上）"""
+    """Extract text from PDF (using pdfplumber for better accuracy)"""
     try:
-        # pdfplumberを試す
+        # Try pdfplumber
         with pdfplumber.open(io.BytesIO(pdf_file.read())) as pdf:
             text = ""
             for page in pdf.pages:
@@ -532,9 +532,9 @@ def extract_text_from_pdf(pdf_file):
                     text += page_text + "\n"
         return text
     except Exception as e:
-        # フォールバック: PyPDF2を使用
-        st.warning(f"pdfplumberでの抽出に失敗しました。PyPDF2にフォールバックします: {str(e)}")
-        pdf_file.seek(0)  # ファイルポインタを先頭に戻す
+        # Fallback: Use PyPDF2
+        st.warning(f"Failed to extract with pdfplumber. Falling back to PyPDF2: {str(e)}")
+        pdf_file.seek(0)  # Reset file pointer to the beginning
         pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_file.read()))
         text = ""
         for page in pdf_reader.pages:
@@ -542,7 +542,7 @@ def extract_text_from_pdf(pdf_file):
         return text
 
 def load_knowledge_base():
-    """ガイドに基づくナレッジベースを構築"""
+    """Build knowledge base based on guide"""
     return get_full_knowledge_base()
 
 def analyze_contract_with_gpt(contract_text, knowledge_base):
@@ -565,7 +565,7 @@ def analyze_contract_with_gpt(contract_text, knowledge_base):
     country_chart_text = ""
     if country_chart is not None and not country_chart.empty:
         country_chart_text = "\n[Country Chart (Complete)]\n"
-        country_chart_text += "Below is actual US EAR Country Chart data.\'X\'は許可が必要であることを示します。\n\n"
+        country_chart_text += "Below is actual US EAR Country Chart data. 'X' indicates license required.\n\n"
         # Include first ~30 countries (considering token limit)
         for idx, row in country_chart.head(30).iterrows():
             country_name = row.iloc[0]
@@ -596,9 +596,9 @@ Japanese Foreign Exchange and Foreign Trade Act is outside the scope.
 Please analyze the following items in detail:
 
 ## 1. Contract Information Extraction
-- Product Name・製品名（whether US-origin）
+- Product Name (whether US-origin)
 - Re-export destination (Japan → Other country)
-- End User情報
+- End User information
 - End Use
 - Contract Value
 - Delivery Date
@@ -627,8 +627,8 @@ Refer to the Country Chart data above and determine regulations for the destinat
 Review applicable license exceptions (LVS, GBS, TSR, TMP, ENC, etc.)
 
 ### E. Embargo Countries & Restricted Lists
-- DPL（Denied Persons List）該当チェック
-- Entity List該当チェック
+- DPL (Denied Persons List) check
+- Entity List check
 - Check for embargo countries (North Korea, Iran, Syria, Cuba, Crimea)
 
 ## 3. Overall Assessment & Risk Evaluation
@@ -657,7 +657,7 @@ Please respond in a clear and structured format.
         
         return response.choices[0].message.content
     except Exception as e:
-        st.error(f"分析エラー: {str(e)}")
+        st.error(f"Analysis Error: {str(e)}")
         return None
 
 
@@ -681,7 +681,7 @@ def analyze_contract_step_by_step(contract_text, knowledge_base, result_containe
     country_chart_text = ""
     if country_chart is not None and not country_chart.empty:
         country_chart_text = "\n[Country Chart (Complete)]\n"
-        country_chart_text += "Below is actual US EAR Country Chart data.\'X\'は許可が必要であることを示します。\n\n"
+        country_chart_text += "Below is actual US EAR Country Chart data. 'X' indicates license required.\n\n"
         for idx, row in country_chart.head(30).iterrows():
             country_name = row.iloc[0]
             country_chart_text += f"\n**{country_name}**:\n"
@@ -703,9 +703,9 @@ def analyze_contract_step_by_step(contract_text, knowledge_base, result_containe
 
 Extract the following information:
 ## 1. Contract Information Extraction
-- Product Name・製品名（whether US-origin）
+- Product Name (whether US-origin)
 - Re-export destination (Japan → Other country)
-- End User情報
+- End User information
 - End Use
 - Contract Value
 - Delivery Date
@@ -777,10 +777,10 @@ Product: {contract_text[:1000]}
 Refer to the ECCN database above and determine the most appropriate ECCN number.
 
 ### B. ECCN Number Determination
-- **推定ECCN番号**: [5桁の番号、e.g., 3A001、5A002、またはEAR99]
+- **推定ECCN番号**: [5-digit code, e.g., 3A001, 5A002, or EAR99]
 - **Category**: [1桁目の意味]
 - **Group**: [2桁目の意味]
-- **Reason for Control**: [3桁目：NS=National Security、MT=Missile Technology、等]
+- **Reason for Control**: [3rd digit: NS=National Security, MT=Missile Technology, etc.]
 - **Selection Rationale**: [Why this ECCN was chosen]
 
 Please respond in the format above.
@@ -848,7 +848,7 @@ Please respond in the format above.
 Product: {contract_text[:1000]}
 
 ### D. License Exception Review
-Applicable license exceptions（LVS, GBS, TSR, TMP, ENC等）について検討してください。
+Applicable license exceptions（LVS, GBS, TSR, TMP, ENCetc.）について検討してください。
 
 - Applicable license exceptions
 - Application conditions
@@ -884,8 +884,8 @@ Product: {contract_text[:1000]}
 ### E. Embargo Countries & Restricted Lists
 Please check the following:
 
-- DPL（Denied Persons List）該当チェック
-- Entity List該当チェック
+- DPL (Denied Persons List) check
+- Entity List check
 - Check for embargo countries (North Korea, Iran, Syria, Cuba, Crimea)
 - Military End User List該当チェック
 
@@ -996,10 +996,10 @@ Product Name: {product_input}
 Refer to the ECCN database above and determine the most appropriate ECCN number.
 
 必ず以下の形式で回答：
-- **推定ECCN番号**: [5桁の番号] または EAR99
-- **分類**: [カテゴリー名]
-- **Group**: [グループ名]
-- **Reason for Control**: [NS, AT, MT等]
+- **推定ECCN番号**: [5-digit code] or EAR99
+- **分類**: [Category name]
+- **Group**: [Group name]
+- **Reason for Control**: [NS, AT, MTetc.]
 - **選定理由**: [詳細な理由]
 """
         try:
@@ -1032,11 +1032,11 @@ Destination: {destination_input}
 
 {chart_context[:2500]}
 
-上記のカントリーチャートを参照し、Destinationに対する規制を判定してください。
+Refer to the Country Chart above and determine regulations for Destination.
 
 必ず以下を分析：
 - Destination名
-- 規制理由（NS, AT, MT等）ごとの許可要否
+- 規制理由（NS, AT, MTetc.）ごとの許可要否
 - 「×」マークがある場合は許可必要
 - 総合判定
 """
@@ -1107,7 +1107,7 @@ Analysis results so far:
 
 Additional Info: {additional_info if additional_info else 'None'}
 
-上記を踏まえて、総合判定を行ってください。
+Based on the analysis results above, make an overall assessment.
 
 必ず以下の形式で回答：
 
@@ -1160,47 +1160,6 @@ def main():
         Smart AI-Powered Analysis for US EAR Re-export Regulations
     </div>
     ''', unsafe_allow_html=True)
-    
-    # Enhanced database status display with modern cards
-    if 'eccn_json' in st.session_state.sample_data and st.session_state.sample_data['eccn_json']:
-        eccn_count = sum(get_eccn_categories_summary(st.session_state.sample_data['eccn_json']).values())
-        
-        # Create a modern status bar
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.markdown(f'''
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-                <div style="color: white; font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">{eccn_count}</div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">ECCN Items</div>
-            </div>
-            ''', unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown('''
-            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 1.5rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                <div style="color: white; font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">33+</div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Countries</div>
-            </div>
-            ''', unsafe_allow_html=True)
-        
-        with col3:
-            st.markdown('''
-            <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 1.5rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
-                <div style="color: white; font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">✓</div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">RAG Active</div>
-            </div>
-            ''', unsafe_allow_html=True)
-        
-        with col4:
-            st.markdown('''
-            <div style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); padding: 1.5rem; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);">
-                <div style="color: white; font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">🚀</div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Online</div>
-            </div>
-            ''', unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
     
     # Sidebar with enhanced design
     with st.sidebar:
@@ -1279,7 +1238,7 @@ Delivery Date: {delivery_date}
             
             if uploaded_file is not None:
                 if uploaded_file.type == "application/pdf":
-                    uploaded_file.seek(0)  # ファイルポインタを先頭に戻す
+                    uploaded_file.seek(0)  # Reset file pointer to the beginning
                     contract_text = extract_text_from_pdf(uploaded_file)
                 else:
                     contract_text = uploaded_file.read().decode('utf-8')
@@ -1287,13 +1246,13 @@ Delivery Date: {delivery_date}
                 contract_text = manual_text
             
             if contract_text.strip():
-                # 契約情報を抽出
+                # Extract contract information
                 st.session_state.extracted_info = extract_contract_info(contract_text)
                 
-                # 追加情報の収集
+                # Collect additional information
                 additional_context = ""
                 
-                # Destinationチェック
+                # Check destination
                 if st.session_state.extracted_info['Destination']:
                     destination = st.session_state.extracted_info['Destination']
                     is_group_a = check_group_a_country(destination, st.session_state.sample_data.get('countries'))
@@ -1305,18 +1264,18 @@ Delivery Date: {delivery_date}
                     if is_concern:
                         additional_context += f"- ⚠️ Country of Concern: {concern_type}\n"
                 
-                # 需要者チェック
-                if st.session_state.extracted_info['需要者']:
-                    end_user = st.session_state.extracted_info['需要者']
+                # Check end user
+                if st.session_state.extracted_info['End User']:
+                    end_user = st.session_state.extracted_info['End User']
                     is_listed, entity_info = check_entity_list(end_user, st.session_state.sample_data.get('entities'))
                     
                     if is_listed:
                         additional_context += f"\n[End User Information]\n"
                         additional_context += f"- ⚠️ Possibly listed on Entity List\n"
-                        additional_context += f"- Listing Reason: {entity_info['掲載理由']}\n"
-                        additional_context += f"- Regulation: {entity_info['規制内容']}\n"
+                        additional_context += f"- Listing Reason: {entity_info['Listing Reason']}\n"
+                        additional_context += f"- Regulation: {entity_info['Regulation']}\n"
                 
-                # 段階的AI分析実行
+                # Execute step-by-step AI analysis
                 st.markdown('<div class="section-header">📋 Analysis Results (Progressive Display)</div>', unsafe_allow_html=True)
                 result_container = st.container()
                 
@@ -1339,7 +1298,7 @@ Delivery Date: {delivery_date}
                     mime="text/plain"
                 )
             with col2:
-                # 詳細レポートの生成
+                # Generate detailed report
                 risk_level = assess_risk_level(st.session_state.analysis_result)
                 full_report = f"""Export Control Analysis Report
 Generated: {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}
@@ -1364,13 +1323,13 @@ Generated: {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}
                 )
     
     with tab2:
-        st.markdown('<div class="section-header">💬 米国EAR再輸出規制 チャット相談</div>', unsafe_allow_html=True)
-        st.info("🇺🇸 米国から輸入したProductを日本から他国へ再輸出する際の米国EAR規制を分析します。Product NameとDestinationを入力してください。")
+        st.markdown('<div class="section-header">💬 US EAR Re-export Regulation Chat Consultation</div>', unsafe_allow_html=True)
+        st.info("🇺🇸 Analyze US EAR regulations for re-exporting US-origin products from Japan to other countries. Enter Product Name and Destination.")
         
         # Enhanced Chat interface with structured input
         col1, col2 = st.columns(2)
         with col1:
-            product_input = st.text_input("Product Name（e.g., semiconductor equipment、encryption software）", key="chat_product")
+            product_input = st.text_input("Product Name (e.g., semiconductor equipment, encryption software)", key="chat_product")
         with col2:
             destination_input = st.text_input("Destination (e.g., China, Russia)", key="chat_destination")
         
@@ -1397,7 +1356,7 @@ Generated: {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}
                 chart_context = ""
                 if country_chart is not None and not country_chart.empty:
                     chart_context = "\n[Country Chart (Complete)]\n"
-                    chart_context += "Below is actual US EAR Country Chart data.\'X\'は許可が必要であることを示します。\n\n"
+                    chart_context += "Below is actual US EAR Country Chart data. 'X' indicates license required.\n\n"
                     # 主要国を含める（トークン制限を考慮）
                     for idx, row in country_chart.head(50).iterrows():
                         country_name = row.iloc[0]
@@ -1510,7 +1469,7 @@ Generated: {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}
         ])
         
         with viz_tab1:
-            st.markdown("### 🗺️ ECCN番号別 世界規制マップ")
+            st.markdown("### 🗺️ World Regulation Map by ECCN Number")
             st.markdown("Visualize which countries require export licenses for specific ECCN numbers")
             
             col1, col2 = st.columns([2, 1])
