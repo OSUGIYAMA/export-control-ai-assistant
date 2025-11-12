@@ -1504,11 +1504,9 @@ def main():
         st.info("🎨 インタラクティブな可視化でデータを直感的に理解できます")
         
         # タブで可視化とデータ管理を分離
-        viz_tab1, viz_tab2, viz_tab3, viz_tab4 = st.tabs([
+        viz_tab1, viz_tab2 = st.tabs([
             "🗺️ 世界規制マップ",
-            "📊 カントリーチャート",
-            "🔢 ECCN検索",
-            "🚨 制裁リスト"
+            "🔢 ECCN検索"
         ])
         
         with viz_tab1:
@@ -1553,41 +1551,6 @@ def main():
                     st.warning("カントリーチャートデータが読み込まれていません")
         
         with viz_tab2:
-            st.markdown("### 📊 カントリーチャート - ヒートマップ")
-            st.markdown("全世界の規制状況を一目で確認できます")
-            
-            if st.session_state.sample_data.get('country_chart') is not None:
-                # 規制サマリーチャート
-                st.markdown("#### 📈 規制理由別の統計")
-                summary_chart = create_regulation_summary_chart(
-                    st.session_state.sample_data['country_chart']
-                )
-                if summary_chart:
-                    st.plotly_chart(summary_chart, use_container_width=True)
-                
-                st.markdown("---")
-                
-                # ヒートマップ
-                st.markdown("#### 🔥 全世界規制ヒートマップ")
-                st.info("💡 各セルをホバーすると、国名・規制理由・ステータスが表示されます")
-                
-                heatmap = create_country_chart_heatmap(
-                    st.session_state.sample_data['country_chart']
-                )
-                if heatmap:
-                    st.plotly_chart(heatmap, use_container_width=True)
-                
-                # 生データも表示
-                with st.expander("📋 カントリーチャート生データを表示"):
-                    st.dataframe(
-                        st.session_state.sample_data['country_chart'],
-                        use_container_width=True,
-                        height=400
-                    )
-            else:
-                st.warning("カントリーチャートデータが読み込まれていません")
-        
-        with viz_tab3:
             st.markdown("### 🔢 ECCN番号データベース検索")
             
             # インタラクティブテーブル
@@ -1637,143 +1600,6 @@ def main():
                         """, unsafe_allow_html=True)
             else:
                 st.warning("ECCNデータが読み込まれていません")
-        
-        with viz_tab4:
-            create_entity_list_viewer(st.session_state.sample_data)
-        
-        st.markdown("---")
-        
-        # 従来のデータ管理セクション
-        st.markdown("### 📁 データ管理")
-        data_type = st.selectbox(
-            "表示するデータを選択",
-            ["ECCN番号リスト", "カントリーグループ", "エンティティリスト（サンプル）"]
-        )
-        
-        if data_type == "ECCN番号リスト":
-            st.markdown("### 📋 ECCN番号データベース")
-            
-            # 統計情報を表示
-            if 'eccn_json' in st.session_state.sample_data:
-                eccn_json = st.session_state.sample_data['eccn_json']
-                summary = get_eccn_categories_summary(eccn_json)
-                
-                st.info(f"🔢 合計 **{sum(summary.values())}** 項目のECCN番号が登録されています")
-                
-                # カテゴリー別統計
-                col1, col2, col3 = st.columns(3)
-                categories_list = list(summary.items())
-                
-                with col1:
-                    for cat, count in categories_list[:4]:
-                        st.metric(cat, f"{count}項目")
-                with col2:
-                    for cat, count in categories_list[4:8]:
-                        st.metric(cat, f"{count}項目")
-                with col3:
-                    for cat, count in categories_list[8:]:
-                        st.metric(cat, f"{count}項目")
-            
-            st.markdown("---")
-            
-            # ECCN検索機能
-            st.markdown("### 🔍 ECCN番号検索")
-            
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                search_keyword = st.text_input("キーワードで検索（品目名、ECCN番号、説明文）", placeholder="例: semiconductor, encryption, 5A002")
-            with col2:
-                st.markdown("<br>", unsafe_allow_html=True)
-                search_button = st.button("🔍 検索", type="primary")
-            
-            if search_keyword or search_button:
-                if search_keyword:
-                    # JSON検索
-                    eccn_json = st.session_state.sample_data.get('eccn_json')
-                    eccn_csv = st.session_state.sample_data.get('eccn_csv')
-                    
-                    results = search_eccn(search_keyword, df=eccn_csv, eccn_json=eccn_json)
-                    
-                    if results:
-                        st.success(f"✅ {len(results)}件の該当品目が見つかりました")
-                        
-                        # 結果を表示（最大20件）
-                        for i, result in enumerate(results[:20], 1):
-                            with st.expander(f"{i}. {result.get('ECCN番号', 'N/A')}", expanded=(i <= 3)):
-                                if 'カテゴリー' in result:
-                                    st.markdown(f"**カテゴリー**: {result['カテゴリー']}")
-                                if 'グループ' in result:
-                                    st.markdown(f"**グループ**: {result['グループ']}")
-                                if '分類' in result:
-                                    st.markdown(f"**分類**: {result.get('分類', 'N/A')}")
-                                if '品目名' in result:
-                                    st.markdown(f"**品目名**: {result.get('品目名', 'N/A')}")
-                                if '規制理由' in result:
-                                    st.markdown(f"**規制理由**: {result.get('規制理由', 'N/A')}")
-                                st.markdown(f"**説明**: {result.get('説明', 'N/A')}")
-                                if 'ソース' in result:
-                                    st.caption(f"データソース: {result['ソース']}")
-                        
-                        if len(results) > 20:
-                            st.info(f"📊 さらに{len(results) - 20}件の結果があります。キーワードを絞り込んでください。")
-                    else:
-                        st.warning("⚠️ 該当する品目が見つかりませんでした。別のキーワードをお試しください。")
-            
-            # 直接ECCN番号を入力して検索
-            st.markdown("---")
-            st.markdown("### 🎯 ECCN番号で直接検索")
-            eccn_direct = st.text_input("ECCN番号を入力", placeholder="例: 5A002, 3A001")
-            
-            if eccn_direct and 'eccn_json' in st.session_state.sample_data:
-                eccn_info = get_eccn_by_number(eccn_direct, st.session_state.sample_data['eccn_json'])
-                if eccn_info:
-                    st.success(f"✅ ECCN番号 **{eccn_direct}** の情報が見つかりました")
-                    st.markdown(f"**ECCN番号**: {eccn_info['ECCN番号']}")
-                    st.markdown(f"**カテゴリー**: {eccn_info['カテゴリー']}")
-                    st.markdown(f"**グループ**: {eccn_info['グループ']}")
-                    st.markdown(f"**説明**: {eccn_info['説明']}")
-                else:
-                    st.warning(f"⚠️ ECCN番号 **{eccn_direct}** の情報が見つかりませんでした")
-            
-            # CSVデータも表示（参考用）
-            if 'eccn_csv' in st.session_state.sample_data:
-                st.markdown("---")
-                st.markdown("### 📋 サンプルECCN番号リスト（CSV）")
-                st.caption("参考：基本的なECCN番号のサンプルリスト")
-                st.dataframe(st.session_state.sample_data['eccn_csv'], use_container_width=True)
-        
-        elif data_type == "カントリーグループ" and 'countries' in st.session_state.sample_data:
-            st.markdown("### 🌏 カントリーグループ")
-            st.dataframe(st.session_state.sample_data['countries'], use_container_width=True)
-            
-            # 国別統計
-            group_a_count = st.session_state.sample_data['countries']['グループA'].sum()
-            concern_count = st.session_state.sample_data['countries']['懸念国'].sum()
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("グループA国", f"{group_a_count}カ国")
-            with col2:
-                st.metric("懸念国", f"{concern_count}カ国")
-        
-        elif data_type == "エンティティリスト（サンプル）" and 'entities' in st.session_state.sample_data:
-            st.markdown("### 🚫 エンティティリスト（サンプル）")
-            st.warning("⚠️ これはサンプルデータです。実際の取引では最新の公式リストを確認してください。")
-            st.dataframe(st.session_state.sample_data['entities'], use_container_width=True)
-        
-        st.markdown("---")
-        
-        # カスタムCSVアップロード
-        st.markdown("### 📤 カスタムデータのアップロード")
-        csv_file = st.file_uploader("規制データCSVをアップロード", type=['csv'])
-        
-        if csv_file is not None:
-            df = pd.read_csv(csv_file)
-            st.dataframe(df, use_container_width=True)
-            
-            # Save to session state
-            st.session_state.regulation_data = df
-            st.success("データが読み込まれました")
 
 if __name__ == "__main__":
     main()
