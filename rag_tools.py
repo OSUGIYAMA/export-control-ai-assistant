@@ -26,6 +26,8 @@ class LicenseExceptionRAG:
         
         # Pinecone接続
         self.pc = Pinecone(api_key=self.pinecone_api_key)
+        # インデックス名は環境に応じて変更してください
+        # ユーザーのPineconeホストURLから判断: license-exceptions
         self.index = self.pc.Index("license-exceptions")
         
         # OpenAI接続
