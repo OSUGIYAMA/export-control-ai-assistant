@@ -20,8 +20,17 @@ from utils import (
     assess_risk_level,
     generate_action_items,
     load_eccn_json,
+    search_eccn_json,
     get_eccn_by_number,
     get_eccn_categories_summary
+)
+from visualization import (
+    create_country_chart_heatmap,
+    create_world_map_restrictions,
+    create_regulation_summary_chart,
+    create_interactive_eccn_table,
+    display_reference_data,
+    create_entity_list_viewer
 )
 
 # Load environment variables
@@ -821,11 +830,152 @@ def main():
                     st.markdown(f"**分析結果**:\n\n{chat['answer']}")
     
     with tab3:
-        st.markdown('<div class="section-header">📊 規制データ管理</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">📊 規制データ可視化 & 管理</div>', unsafe_allow_html=True)
         
-        st.info("CSVファイルで規制リスト（ECCN番号、カントリーリスト等）を管理できます。")
+        st.info("🎨 インタラクティブな可視化でデータを直感的に理解できます")
         
-        # サンプルデータの表示
+        # タブで可視化とデータ管理を分離
+        viz_tab1, viz_tab2, viz_tab3, viz_tab4 = st.tabs([
+            "🗺️ 世界規制マップ",
+            "📊 カントリーチャート",
+            "🔢 ECCN検索",
+            "🚨 制裁リスト"
+        ])
+        
+        with viz_tab1:
+            st.markdown("### 🗺️ ECCN番号別 世界規制マップ")
+            st.markdown("特定のECCN番号に対して、どの国が規制対象かを地図上で可視化します")
+            
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                eccn_for_map = st.text_input(
+                    "ECCN番号を入力",
+                    value="3B001",
+                    key="map_eccn",
+                    help="例: 3B001, 5A002, 4A003"
+                )
+            with col2:
+                regulation_reason = st.selectbox(
+                    "規制理由を選択",
+                    ["NS 1", "NS 2", "MT 1", "NP 1", "NP 2", "CB 1", "CB 2", "AT 1", "AT 2"],
+                    key="map_regulation"
+                )
+            
+            if st.button("🗺️ 地図を生成", type="primary", key="generate_map"):
+                if st.session_state.sample_data.get('country_chart') is not None:
+                    with st.spinner("地図を生成中..."):
+                        world_map = create_world_map_restrictions(
+                            st.session_state.sample_data['country_chart'],
+                            eccn_for_map,
+                            regulation_reason
+                        )
+                        if world_map:
+                            st.plotly_chart(world_map, use_container_width=True)
+                            
+                            st.success(f"""
+                            ✅ **ECCN {eccn_for_map} - {regulation_reason}** の規制マップを表示しました
+                            
+                            - 🟢 **緑**: 許可不要（輸出可能）
+                            - 🔴 **赤**: 許可必要（BISへの申請が必要）
+                            """)
+                        else:
+                            st.error("地図の生成に失敗しました")
+                else:
+                    st.warning("カントリーチャートデータが読み込まれていません")
+        
+        with viz_tab2:
+            st.markdown("### 📊 カントリーチャート - ヒートマップ")
+            st.markdown("全世界の規制状況を一目で確認できます")
+            
+            if st.session_state.sample_data.get('country_chart') is not None:
+                # 規制サマリーチャート
+                st.markdown("#### 📈 規制理由別の統計")
+                summary_chart = create_regulation_summary_chart(
+                    st.session_state.sample_data['country_chart']
+                )
+                if summary_chart:
+                    st.plotly_chart(summary_chart, use_container_width=True)
+                
+                st.markdown("---")
+                
+                # ヒートマップ
+                st.markdown("#### 🔥 全世界規制ヒートマップ")
+                st.info("💡 各セルをホバーすると、国名・規制理由・ステータスが表示されます")
+                
+                heatmap = create_country_chart_heatmap(
+                    st.session_state.sample_data['country_chart']
+                )
+                if heatmap:
+                    st.plotly_chart(heatmap, use_container_width=True)
+                
+                # 生データも表示
+                with st.expander("📋 カントリーチャート生データを表示"):
+                    st.dataframe(
+                        st.session_state.sample_data['country_chart'],
+                        use_container_width=True,
+                        height=400
+                    )
+            else:
+                st.warning("カントリーチャートデータが読み込まれていません")
+        
+        with viz_tab3:
+            st.markdown("### 🔢 ECCN番号データベース検索")
+            
+            # インタラクティブテーブル
+            if 'eccn_json' in st.session_state.sample_data:
+                eccn_df = create_interactive_eccn_table(st.session_state.sample_data['eccn_json'])
+                
+                if eccn_df is not None and not eccn_df.empty:
+                    st.info(f"📚 合計 **{len(eccn_df)}** 項目のECCN番号が登録されています")
+                    
+                    # 検索機能
+                    search_keyword = st.text_input(
+                        "🔍 キーワードで検索",
+                        placeholder="例: semiconductor, encryption, 5A002",
+                        key="eccn_search"
+                    )
+                    
+                    if search_keyword:
+                        filtered_df = eccn_df[
+                            eccn_df.apply(lambda row: row.astype(str).str.contains(search_keyword, case=False).any(), axis=1)
+                        ]
+                        st.success(f"✅ {len(filtered_df)}件の一致が見つかりました")
+                        st.dataframe(filtered_df, use_container_width=True, height=500)
+                    else:
+                        st.dataframe(eccn_df, use_container_width=True, height=500)
+                    
+                    # クリックで詳細表示（選択機能）
+                    st.markdown("---")
+                    st.markdown("#### 📋 ECCN詳細表示")
+                    selected_eccn = st.selectbox(
+                        "ECCN番号を選択して詳細を表示",
+                        options=eccn_df['ECCN番号'].unique(),
+                        key="selected_eccn_detail"
+                    )
+                    
+                    if selected_eccn:
+                        selected_row = eccn_df[eccn_df['ECCN番号'] == selected_eccn].iloc[0]
+                        
+                        st.markdown(f"""
+                        <div class="info-box">
+                        <h4>🔢 {selected_eccn}</h4>
+                        <p><strong>カテゴリー:</strong> {selected_row['カテゴリー']}</p>
+                        <p><strong>グループ:</strong> {selected_row['グループ']}</p>
+                        <p><strong>説明:</strong> {selected_row['説明']}</p>
+                        <p><strong>規制理由:</strong> {selected_row['規制理由']}</p>
+                        <p><strong>参照:</strong> Commerce Control List (CCL)</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+            else:
+                st.warning("ECCNデータが読み込まれていません")
+        
+        with viz_tab4:
+            create_entity_list_viewer(st.session_state.sample_data)
+        
+        st.markdown("---")
+        
+        # 従来のデータ管理セクション
+        st.markdown("### 📁 データ管理")
         data_type = st.selectbox(
             "表示するデータを選択",
             ["ECCN番号リスト", "カントリーグループ", "エンティティリスト（サンプル）"]

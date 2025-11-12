@@ -9,4 +9,7 @@ langchain==0.1.6
 langchain-openai==0.0.5
 tiktoken==0.5.2
 chromadb==0.4.22
+plotly==5.18.0
+folium==0.15.1
+streamlit-folium==0.16.0
 
