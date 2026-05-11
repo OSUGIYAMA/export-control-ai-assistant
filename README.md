@@ -92,20 +92,23 @@ Your browser will automatically open `http://localhost:8501`.
 - **Environment Management**: python-dotenv
 
 ## 📁 Project Structure
+
+```
 Economic Security Professor/
-├── app.py                          # Main application
-├── knowledge_base.py               # Knowledge base (FEFTA and U.S. EAR)
-├── utils.py                        # Utility functions
-├── requirements.txt                # Python dependencies
-├── .env                            # Environment variables (API keys)
-├── eccnnumber.json                 # ECCN database (1,500+ entries) ★NEW
-├── README.md                       # This file
-├── USAGE_GUIDE.md                  # Detailed usage guide
-├── QUICK_START.md                  # Quick start guide
-└── sample_data/                    # Sample data
-├── eccn_list.csv               # ECCN list (basic)
-├── country_groups.csv          # Country Groups
-└── entity_list_sample.csv      # Entity List (sample)
+├── app.py                  # Main application
+├── knowledge_base.py       # Knowledge base (FEFTA and U.S. EAR)
+├── utils.py                # Utility functions
+├── requirements.txt        # Python dependencies
+├── .env                    # Environment variables (API keys)
+├── eccnnumber.json         # ECCN database (1,500+ entries) ★NEW
+├── README.md               # This file
+├── USAGE_GUIDE.md          # Detailed usage guide
+├── QUICK_START.md          # Quick start guide
+└── sample_data/            # Sample data
+    ├── eccn_list.csv           # ECCN list (basic)
+    ├── country_groups.csv      # Country Groups
+    └── entity_list_sample.csv  # Entity List (sample)
+```
 
 ## 🔮 Roadmap
 
